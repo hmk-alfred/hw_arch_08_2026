@@ -1,0 +1,31 @@
+\section{Recommended Final Demonstration}
+\label{sec:final-demo}
+
+A customer-facing November demonstration showing both adoption paths side by side, both built from hardware derived from the same Alfred common node (Section~\ref{sec:common-platform}).
+
+\begin{diagram}
+LEFT SIDE -- CLEAN-SHEET              RIGHT SIDE -- EXISTING VEHICLE
+
+     Clicker 4                        legacy device -- CAN -- legacy device
+         |                                          |
+    10BASE-T1S                              Alfred Gateway
+         |                                          |
+  +------+------+                            10BASE-T1S
+  |             |                                   |
+ E2B           E2B                               Clicker 4
+  |             |
+sensor       actuator
+
+           BOTH SIDES: SAME ALFRED COMMON NODE
+\end{diagram}
+
+The point of the demonstration is explicit and stated to the customer in exactly these terms: a customer does not have to choose whether Alfred only supports new machines or only supports legacy machines.
+
+\begin{diagram}
+NEW PROGRAM       -> native T1S + E2B
+EXISTING PROGRAM  -> gateway + pseudo-bus
+
+                  using the SAME underlying infrastructure
+\end{diagram}
+
+Run order: start with the right side (existing vehicle) so the customer sees their own architecture untouched and Alfred attaching non-invasively first -- this is deliberately the lower-anxiety opening for a brownfield-leaning audience. Show Phase~A (passive mirror) before Phase~B (authorized bidirectional command), narrating the Mode~1/Mode~2 distinction explicitly (Section~\ref{sec:gateway-modes}) so the safety posture is understood before any transmit capability is shown. Then move to the left side and show the identical Clicker~4 issuing a command to a native E2B actuator and receiving native E2B sensor data, closing on the single sentence that both sides just ran on hardware built from the same core design (Section~\ref{sec:common-platform}) -- that sentence is the actual sale, not the individual demos.

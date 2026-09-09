@@ -1,0 +1,37 @@
+\section{Rev C --- Industrial Demonstration Platform}
+\label{sec:rev-c}
+
+Rev~C is the customer-demo-quality implementation, derived from the same common node validated in Rev~B -- not a restart.
+
+\begin{diagram}
+         COMMON REV C CORE
+               |
+       +-------+-------+
+       |               |
+       v               v
+
+   E2B variant      Gateway variant
+\end{diagram}
+
+Per Section~\ref{sec:common-platform}, Rev~C moves to Option~3 (closely related derivatives from a common reference design) rather than continuing selective population on one PCB, now that Rev~B has resolved the pin/footprint interactions between the E2B and Gateway sections. A single configurable board remains acceptable if Rev~B bring-up shows no compelling reason to split -- the hard requirement is that \textbf{both variants share the same platform architecture} (same MCU, same network block, same power architecture, same firmware base image), not that they are literally the same Gerbers.
+
+\subsection{What Rev C improves over Rev B}
+
+\begin{itemize}[itemsep=0.1em]
+\item Connector selection: locking connectors for power and network (no bare screw terminals in the customer-facing demo).
+\item Board dimensions and mounting sized for a demo enclosure/fixture rather than lab bench sprawl.
+\item Power robustness carried forward from Rev~B, re-verified after connector changes.
+\item Labeling: silkscreened role/mode/pinout labeling so the demo is self-explanatory without a schematic in hand.
+\item Interface organization: peripheral-side and bus-side connectors grouped and clearly separated on the board edge.
+\item Cable management and enclosure compatibility for a clean customer-facing presentation.
+\item BOM quality: replace any bench-expedient part (e.g., a 0\,$\Omega$-link current-sense placeholder) with the intended production-representative part.
+\item Testability: a repeatable go/no-go bring-up procedure a non-designer can run.
+\item Configuration simplicity: populating a build as E2B or Gateway should be a documented, low-ambiguity procedure.
+\item Electrical protection carried forward and re-verified, not re-derived from scratch.
+\end{itemize}
+
+\begin{decision}[title={Explicitly not required of Rev C}]
+AEC qualification, production EMC qualification, ISO~26262 production hardware, or environmental qualification. Rev~C is credible engineering demonstration hardware for a customer conversation, not a production part number -- treating it as such would burn schedule the exit gate does not require (Section~\ref{sec:exit-gate}).
+\end{decision}
+
+Rev~C is explicitly the first thing cut or simplified if schedule slips (Section~\ref{sec:feature-cuts}); Rev~B passing its own validation matrix is the load-bearing deliverable, and Rev~C exists to make the proof presentable, not to constitute the proof itself.

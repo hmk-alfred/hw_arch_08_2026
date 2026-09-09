@@ -1,0 +1,30 @@
+\section{Rev A --- LAN8650/LAN8651 Development Board}
+\label{sec:rev-a}
+
+Rev~A is deliberately a \textbf{development board}, optimized for maximum observability and learning, not size. Its target part is \textbf{LAN8650/LAN8651} (Section~\ref{sec:lan866x}), reinterpreting the original ``LAN8660/LAN8661 development board'' request in light of the primary-source finding that those parts are not the common node's network component. A secondary, explicitly time-boxed section of the same board (or a small companion board, whichever is lower-risk once schematic capture starts) characterizes LAN8660 as the candidate MCU-less E2B investigation.
+
+\subsection{What Rev A exposes}
+
+\begin{itemize}[itemsep=0.1em]
+\item LAN8650 \emph{and} LAN8651 footprints (see variant strategy below), with the T1S differential pair broken out to accessible test points before and after the coupling transformer.
+\item Termination configuration via populate/depopulate jumpers, matching the Microchip/MikroE reference pattern (Section~\ref{sec:lan866x}).
+\item PLCA-related configuration exposed as header pins/DIP switches for node-ID strapping so node ID can be changed without reflashing anything.
+\item Host interface: SPI, IRQ, and reset broken out to both (a) a mikroBUS-pinout header for direct Clicker~4 compatibility, and (b) a generic 0.1$''$ header for logic-analyzer/oscilloscope access independent of the mikroBUS connector.
+\item Clock circuit per reference design, with a test point on the crystal/oscillator output.
+\item Status LEDs for link, PLCA state, and TX/RX activity.
+\item Test points for supply current (in-line shunt footprint, populated with a 0\,$\Omega$ link by default) and for rail voltage on every regulated rail.
+\item Debug header: SWD, unpopulated unless the LAN8660 secondary section requires an onboard microcontroller for its own characterization harness.
+\item Flexible power input: bench supply banana/terminal block \emph{and} a mikroBUS-fed 3.3\,V/5\,V option, so the board can run standalone or purely parasitically off the Clicker~4.
+\end{itemize}
+
+\subsection{Variant strategy: one board vs. two}
+
+\begin{decision}[title={Recommendation: one board, dual footprint}]
+LAN8650 and LAN8651 differ only in the integrated LDO (LAN8651 includes it); they share a package and pinout family closely enough that a single Rev~A board with two adjacent, individually-populated footprints (populate one, leave the other empty) is lower-risk than two separate board spins: one Gerber/BOM/fab cycle, one bring-up procedure, and a direct side-by-side comparison of LDO-integrated vs. external-supply behavior on the same board revision. This mirrors the ``option 1'' population strategy already chosen for the common node itself (Section~\ref{sec:common-platform}) -- Rev~A should teach that discipline, not contradict it.
+\end{decision}
+
+The LAN8660 secondary investigation gets its own small, clearly separated section of the same PCB (or a follow-on mini-board if schematic real estate or schedule makes that cleaner) -- it is not merged into the primary LAN8650/1 footprint, since LAN8660's I$^2$C/SPI/UART pins are peripheral-facing (endpoint-side), not host-facing, and mixing the two would confuse exactly the distinction Section~\ref{sec:lan866x} exists to make clear.
+
+\subsection{What Rev A teaches Alfred}
+
+Concretely, by the end of Rev~A bring-up (target: mid-to-late October, Section~\ref{sec:schedule}) Alfred should have first-hand, measured answers to: does the OA-TC6 SPI link come up cleanly against Alfred's chosen MCU family (Section~\ref{sec:rev-b}) using the open driver reference; what does PLCA transmit-opportunity timing actually look like on a scope with 2--3 nodes; what is real T1S supply current at idle and during sustained TX; how sensitive is link quality to the bench cable/termination setup actually available in the lab (not the datasheet's idealized topology); and, from the secondary LAN8660 section, whether a software-less RCP endpoint is worth a future product investment at all, or whether it should be dropped from the roadmap entirely once its actual configuration workflow (MPLAB Network Creator, network-managed rather than firmware-managed) is seen hands-on. Rev~A's job is to retire these unknowns before Rev~B commits them to a schematic that also has to carry CAN/CAN-FD/LIN and protected power.

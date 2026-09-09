@@ -1,0 +1,25 @@
+\section{Executive Summary}
+\label{sec:exec-summary}
+
+Alfred has two customer electrical-architecture entry points. They are not competing strategies -- they are different architectures for customers starting from different places.
+
+\begin{diagram}
+ARCHITECTURE 1 -- CLEAN-SHEET
+   Clean-sheet customer -> Alfred-native 10BASE-T1S architecture ->
+   common Alfred node configured as E2B -> peripherals
+
+ARCHITECTURE 2 -- EXISTING VEHICLE
+   Existing vehicle customer -> customer retains existing E/E infrastructure ->
+   common Alfred node configured as Gateway -> CAN/CAN-FD/LIN traffic
+   represented through Alfred -> 10BASE-T1S pseudo-bus
+\end{diagram}
+
+The commercial and technical wedge for both is \textbf{10BASE-T1S}. For a clean-sheet program it offers an Ethernet-oriented peripheral network with simplified translation nodes (Section~\ref{sec:arch-a}). For an existing-vehicle program it creates an Alfred-facing network onto which existing CAN/CAN-FD/LIN traffic can be represented without forcing the customer to rebuild their E/E architecture (Section~\ref{sec:arch-b}).
+
+The September--November objective is narrow and specific: \textbf{prove that both architectures are supported by the same Alfred hardware family.} Concretely, that means one common interface-node platform (Section~\ref{sec:common-platform}) that is populated or configured differently for the E2B role versus the Gateway role -- not two unrelated boards that happen to share a name.
+
+\textbf{Central compute is explicitly out of scope for this program.} A MikroE Clicker~4 (STM32F745) stands in for Alfred's eventual central compute for the entire September--November window; nothing in this plan depends on, or should influence, Alfred's future central-compute silicon decision.
+
+\textbf{An important correction surfaced during this planning pass:} the user-specified LAN8660/LAN8661 parts are Microchip's \emph{VelocityDRIVE endpoint} family -- fixed-function, MCU-less 10BASE-T1S devices configured over the network via a vendor GUI tool (MPLAB Network Creator), not general-purpose PHY/MAC-PHY silicon meant to sit behind a customer MCU. They cannot host Alfred's own firmware, cannot speak CAN/CAN-FD/LIN, and therefore cannot serve as the network component of a Gateway. Section~\ref{sec:lan866x} documents this finding against primary Microchip sources and identifies the part that actually matches the common-node architecture in the user's own block diagrams: the \textbf{LAN8650/LAN8651 MAC-PHY family} (SPI, OPEN Alliance TC6, host-MCU-driven). The plan below uses LAN8650/LAN8651 as the common node's primary network component and keeps LAN8660/LAN8661 in scope as a secondary, explicitly time-boxed investigation into an MCU-less lightweight E2B variant -- exactly the kind of correction this program exists to catch in September rather than in a Rev~B post-mortem.
+
+By November 30 both architectures must be demonstrated on hardware derived from one common node: a clean-sheet multidrop 10BASE-T1S network of Alfred nodes in E2B mode carrying real sensor and actuator traffic to/from a Clicker~4, and a brownfield CAN network with an Alfred Gateway node passively mirroring traffic onto a 10BASE-T1S pseudo-bus and, in an explicitly authorized bidirectional mode, carrying a validated command from the Clicker~4 through to a physical device and back. Section~\ref{sec:exit-gate} is the exact, checkable pass/fail criteria for both.

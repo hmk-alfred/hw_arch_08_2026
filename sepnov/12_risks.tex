@@ -1,0 +1,20 @@
+\section{Major Risks}
+\label{sec:risks}
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}p{3.6cm} X@{}}
+\toprule
+\textbf{Risk} & \textbf{Assessment / mitigation} \\
+\midrule
+Fabrication and shipping lead time eats the schedule margin & Three PCB spins (Rev~A, Rev~B, Rev~C) in a 12-week window leaves little slack if any single fab/assembly cycle runs past $\sim$1--2 weeks. Mitigation: order Rev~A the moment schematic/layout review closes rather than batching with other purchasing; treat Rev~C as explicitly droppable (Section~\ref{sec:feature-cuts}) specifically to protect this risk. \\
+Part-family mismatch repeats itself elsewhere in the BOM & The LAN8660/LAN8661 correction (Section~\ref{sec:lan866x}) is exactly the kind of assumption-vs-datasheet gap that can recur for the CAN-FD/LIN transceivers or the MCU's FDCAN peripheral errata. Mitigation: every part selected in Week~1 (Section~\ref{sec:schedule}) is checked against its current datasheet before the Rev~A schematic freezes, not after Rev~B silicon is ordered. \\
+STM32G4 FDCAN peripheral / driver maturity & Integrated FDCAN reduces BOM but shifts CAN-FD risk into MCU peripheral driver correctness rather than an external, separately-qualified CAN-FD controller IC. Mitigation: bring up FDCAN on the Nucleo board during Rev~A/B schematic capture (in parallel, not serially), so driver issues surface before they are blocking Rev~B bring-up. \\
+Bench CAN network is not representative of a real vehicle & The controlled legacy network for Section~\ref{sec:arch-b}'s demonstration is built specifically for the test, not sourced from an actual harness -- the Gateway's passive/active behavior is validated against a simplified topology and may not generalize to real bus loading, multiple gateways, or OEM-specific error handling. This is an accepted, explicit limitation of a September--November program, not something this plan claims to have solved. \\
+Hardware TX-enable gating implemented incorrectly & The single most safety-relevant design element in the whole plan (Section~\ref{sec:gateway-modes}) is also the easiest to get subtly wrong (e.g., a gate that defaults to enabled on power glitch, or a watchdog timeout that does not actually retract TX). Mitigation: Mode~1/Mode~2 behavior is on the Rev~B validation matrix (Section~\ref{sec:validation-plan}) as a first-class, individually scored item, not folded into general bring-up. \\
+Single common PCB with selective population creates pin/timer conflicts & The E2B peripheral footprint and the Gateway bus footprint both compete for a limited set of MCU timer/SPI/UART resources on the shared Rev~A/B design (Section~\ref{sec:common-platform}); an unresolved conflict discovered during Rev~B layout is expensive this late. Mitigation: pin/resource allocation is finalized in Week~2 (Section~\ref{sec:schedule}) as its own reviewed artifact, before schematic capture, not discovered during layout. \\
+Small team, high task parallelism & The schedule assumes schematic, layout, firmware, and test work proceed in parallel across disciplines; if any one function (most likely PCB layout) is single-threaded across a small team, the October/November critical path compresses further than shown. Mitigation: Rev~C is the designated schedule shock absorber (Section~\ref{sec:feature-cuts}), not Rev~B validation. \\
+Mixed LAN8650/LAN8651 board revisions behave differently & MIKROE-5543 and MIKROE-6550 may carry different silicon steppings or reference-design tweaks; an apparent ``node compatibility'' issue during Week~1 bring-up could be a revision difference rather than a real protocol problem. Mitigation: characterize both click-board SKUs against each other explicitly in Week~1 before attributing any anomaly to Alfred's own design. \\
+\bottomrule
+\end{tabularx}
+\end{center}

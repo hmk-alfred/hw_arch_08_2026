@@ -1,0 +1,43 @@
+\section{November 30 Acceptance Criteria}
+\label{sec:exit-gate}
+
+Both architectures must pass. Each line is a specific, checkable claim, not a general impression.
+
+\subsection{Greenfield pass}
+
+\begin{itemize}[itemsep=0.1em, label={$\square$}]
+\item Clicker~4 attached to the T1S network.
+\item At least two custom Alfred nodes communicate over multidrop 10BASE-T1S.
+\item Three nodes preferred, not required.
+\item Node operates as an E2B (Section~\ref{sec:arch-a}).
+\item At least one sensor/interface input is transported toward the Clicker~4.
+\item At least one physical output/actuator command is transported from the Clicker~4.
+\item PLCA behavior characterized (Section~\ref{sec:validation-plan}).
+\item Latency measured.
+\item Jitter measured.
+\item Network recovery demonstrated.
+\item Node power-cycle recovery demonstrated.
+\end{itemize}
+
+\subsection{Brownfield pass}
+
+\begin{itemize}[itemsep=0.1em, label={$\square$}]
+\item Existing CAN network remains operational throughout.
+\item Alfred Gateway connects without replacing the network.
+\item Passive mode (Mode~1, Section~\ref{sec:gateway-modes}) verified -- Gateway never asserts TX while disabled.
+\item Traffic captured.
+\item Traffic timestamped.
+\item Traffic represented on the Alfred T1S pseudo-bus.
+\item Clicker~4 receives mirrored traffic.
+\item Authorized TX mode (Mode~2) enabled explicitly, not by default.
+\item Controlled command passes: Clicker~4 $\rightarrow$ 10BASE-T1S $\rightarrow$ Gateway $\rightarrow$ CAN $\rightarrow$ device.
+\item Physical/device response observed.
+\item Response mirrored back to the Clicker~4.
+\item End-to-end latency measured.
+\item CAN-FD demonstrated where available.
+\item LIN demonstrated \emph{if} it does not jeopardize core schedule (Section~\ref{sec:arch-b}).
+\end{itemize}
+
+\begin{decision}[title={How this gate is scored}]
+Every unchecked item in either list is a named gap in the November~30 report, not a silent omission -- the exit review (Section~\ref{sec:schedule}) walks both lists explicitly against Section~\ref{sec:validation-plan} data, not against demo-day impressions.
+\end{decision}

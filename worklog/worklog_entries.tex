@@ -1,6 +1,12 @@
 % Worklog entries -- APPEND ONLY. Add new \worklogentry{...}{...}{...} blocks
 % at the end of this file; never edit or delete a prior entry. Keep
 % worklog/WORKLOG.md in sync (one-line-per-session summary, human/git-facing).
+%
+% This file is \input by BOTH main.tex (the architecture thesis) and
+% sepnov_plan.tex (the Sept-Nov execution plan). Do NOT use \ref{sec:...} to
+% a label that only exists in one of the two documents -- it will compile
+% fine in that document and fail (or leave a permanently undefined
+% reference) in the other. Refer to sections by plain-text name instead.
 
 \worklogentry{2026-09-08}{Initial architecture document authored}{
 Set up the project (git repo, LaTeX multi-file build, worklog mechanism) and
@@ -25,7 +31,7 @@ next engineering tasks; and a final explicit 12-month-runway recommendation
 the full E2B family). No prior session context existed; this is the
 baseline document. Next session should: review/tighten numeric placeholders
 against any real hardware measurements once available, and begin tracking
-actual MVP0 progress against Section~\ref{sec:roadmap} here.
+actual MVP0 progress against the MVP Roadmap section here.
 }
 
 \worklogentry{2026-09-08}{Condensed Option A and Option B into single \texorpdfstring{$\le$}{<=}2-page sections}{
@@ -63,4 +69,68 @@ cleanly: 37 pages, zero undefined references, one negligible ($<$2mm)
 cosmetic overfull-hbox warning. Next session should: if further sections
 are ever split or merged, re-run the grep above before trusting any
 hardcoded diagram cross-reference.
+}
+
+\worklogentry{2026-09-08}{New document: Sept--Nov 2026 electrical architecture plan (sepnov\_plan.tex)}{
+The user replaced the prior task scope with a much narrower, dated deliverable:
+a focused electrical-architecture development plan for September~8 --
+November~30, 2026, covering 10BASE-T1S, the common Alfred interface-node
+platform, E2B/Gateway configurations, LAN865x/LAN866x hardware, and PCB
+Revs A/B/C -- explicitly excluding central-compute selection, zonal
+computing, firmware generation, SIL/HIL, application software, autonomous
+driving, infotainment, and production certification. Per the user's choice
+(asked via AskUserQuestion), this became a \emph{new, separate} document
+rather than replacing the existing thesis: \code{sepnov\_plan.tex} +
+\code{sepnov/01\_executive\_summary.tex} through
+\code{sepnov/15\_final\_questions.tex}, reusing the shared
+\code{preamble.tex} and this same worklog. The existing thesis
+(\code{main.tex}) is untouched. \code{Makefile} now has \code{pdf} (thesis),
+\code{plan} (this doc), and \code{all} targets.
+
+Before writing, verified Microchip's current LAN8660/LAN8661/LAN8662 and
+LAN8650/LAN8651 documentation via WebSearch/WebFetch against primary
+Microchip sources (sell sheet DS00006257C, product briefs, MikroE click-board
+pages) rather than trusting the user's block diagrams at face value. Finding,
+surfaced prominently in Section 5 of the new document: LAN8660/8661/8662 are
+Microchip's \emph{VelocityDRIVE endpoint} family -- fixed-function, MCU-less
+10BASE-T1S devices configured over the network via MPLAB Network Creator, not
+general-purpose PHY/MAC-PHY silicon meant to sit behind a customer MCU. They
+cannot host Alfred's own firmware or speak CAN/CAN-FD/LIN, so they cannot
+serve as the common node's network component or the Gateway role. The part
+that actually matches the user's own common-node block diagram is
+\textbf{LAN8650/LAN8651} (MAC-PHY, SPI, OPEN Alliance TC6) -- used as the
+primary network component throughout Rev~A/B/C, with LAN8660 kept in scope
+only as a secondary, explicitly time-boxed investigation into a possible
+future MCU-less lightweight E2B SKU. Also identified that MikroE sells
+mikroBUS-compatible LAN8651-based click boards (Two-Wire ETH Click,
+MIKROE-5543; Two-Wire ETH 3~Click, MIKROE-6550) that plug directly into the
+Clicker~4's mikroBUS sockets -- recommended as the fastest Week~1 bring-up
+path, ahead of any custom Rev~A silicon arriving.
+
+Document structure follows the user's exact 14-part final-deliverable
+format plus a 12-question final Q\&A section; Architecture~A and
+Architecture~B sections were each held to the requested $\sim$3-page cap
+(verified by page count after build: both land at exactly 3 pages). The
+September--November schedule (Section 10) is a 7-column task table
+(task/owner/dependency/start/target/validation method/pass condition)
+rendered in landscape (added \code{pdflscape} to the shared preamble) since
+7 meaningful columns do not fit a portrait page. Also added \code{amssymb}
+to the shared preamble (needed for \code{\textbackslash square} checklist
+markers in the exit-gate section) -- this is a preamble change so it affects
+both documents' builds, but is additive/harmless to the thesis. Rebuilt both
+documents cleanly: thesis 38 pages, plan 29 pages, zero undefined references
+in either, one negligible cosmetic overfull-hbox warning in each (pre-existing
+in the thesis, newly introduced but sub-2mm in the plan). Fixed one
+cross-document hazard along the way: an existing worklog entry used
+\code{\textbackslash ref\{sec:roadmap\}}, a label that only exists in the
+thesis, which would permanently fail to resolve when this same
+worklog file is \code{\textbackslash input} by the new plan document -- changed to plain
+text and added a header comment to \code{worklog\_entries.tex} warning
+future sessions not to \code{\textbackslash ref} document-specific labels there.
+
+Next session should: if the Rev~A schematic work actually starts, confirm
+LAN8650 vs LAN8651 pin-compatibility assumption (Section 6) against the
+real datasheet pinout tables before finalizing the dual-footprint layout,
+since that recommendation was made from product-brief-level sourcing, not a
+full datasheet pin-by-pin diff.
 }

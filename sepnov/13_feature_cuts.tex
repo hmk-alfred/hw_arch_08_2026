@@ -1,0 +1,33 @@
+\section{Feature-Cut Priorities}
+\label{sec:feature-cuts}
+
+This program is not optimized around producing the maximum number of PCBs. It is optimized around reaching November~30 with two validated customer architectures built on one coherent Alfred hardware platform. If schedule slips, cuts happen in this order.
+
+\subsection{Protect at all costs}
+
+\begin{enumerate}[itemsep=0.1em]
+\item LAN8650/LAN8651 (and, time permitting, LAN8660) learning (Section~\ref{sec:lan866x}).
+\item Rev~A.
+\item Rev~B.
+\item The common-node architecture itself (Section~\ref{sec:common-platform}).
+\item Multidrop 10BASE-T1S.
+\item Greenfield E2B demo (Section~\ref{sec:arch-a-demo}).
+\item CAN brownfield Gateway (Section~\ref{sec:arch-b}).
+\item Authorized bidirectional operation (Mode~2, Section~\ref{sec:gateway-modes}).
+\item Quantitative validation (Section~\ref{sec:validation-plan}).
+\end{enumerate}
+
+\subsection{Cut first}
+
+\begin{itemize}[itemsep=0.1em]
+\item 100BASE-T1 / 1000BASE-T1.
+\item Any protocol beyond CAN/CAN-FD/(LIN).
+\item Sophisticated enclosures.
+\item Large peripheral counts on the E2B demo (one sensor, one actuator is sufficient; more is not required).
+\item Additional node SKUs beyond E2B and Gateway.
+\item Cosmetic features (labeling polish, connector aesthetics) beyond what Section~\ref{sec:rev-c} already treats as minimum-credible.
+\end{itemize}
+
+\begin{decision}[title={LIN and Rev C are explicitly conditional}]
+LIN demonstration becomes optional the moment it threatens CAN/CAN-FD/T1S validation (Section~\ref{sec:arch-b}) -- it is never protected at the expense of the mandatory bus set. Rev~C is dropped or simplified (fall back to demonstrating on characterized Rev~B hardware, cleaned up as much as time allows) rather than letting a Rev~C schedule slip jeopardize Rev~B validation, which is the load-bearing proof for the entire program (Section~\ref{sec:rev-c}).
+\end{decision}

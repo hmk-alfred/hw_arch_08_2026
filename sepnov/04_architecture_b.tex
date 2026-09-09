@@ -1,0 +1,124 @@
+\section{Architecture B --- Existing Vehicle / Alfred Gateway}
+\label{sec:arch-b}
+
+Customer already has an established vehicle E/E architecture and does not want to redesign the network, replace existing ECUs, replace CAN/LIN, or start a new vehicle program solely for Alfred. Alfred attaches itself to the existing infrastructure; the original network continues operating unmodified.
+
+\begin{diagram}
+                EXISTING VEHICLE
+
+      ECU -------- CAN -------- ECU
+                    |
+                    |
+              Alfred Node
+              Gateway Mode
+                    |
+               10BASE-T1S
+                    |
+                    v
+                 Clicker 4
+\end{diagram}
+
+\subsection{The Alfred pseudo-bus}
+
+Alfred does not replace the original CAN/LIN bus. It builds a parallel, Alfred-facing representation of it:
+
+\begin{diagram}
+             EXISTING BUS
+                 |
+                 v
+               CAPTURE
+                 |
+                 v
+              TIMESTAMP
+                 |
+                 v
+           NORMALIZE / MAP
+                 |
+                 v
+               MIRROR
+                 |
+                 v
+           10BASE-T1S
+                 |
+                 v
+          ALFRED PSEUDO-BUS
+\end{diagram}
+
+Five functions, kept explicitly distinct rather than blurred together:
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}p{2.6cm} X@{}}
+\toprule
+\textbf{Function} & \textbf{Definition} \\
+\midrule
+Capture & Observing existing traffic. Read-only at the transceiver level; the only function active in Mode~1 (Section~\ref{sec:gateway-modes}). \\
+Translation & Converting bus representation (CAN frame $\rightarrow$ normalized, timestamped record) -- a data-format operation, not a transmission. \\
+Mirroring & Replicating useful, normalized traffic onto Alfred's own T1S network so the Clicker~4 (or any future central compute) sees legacy-bus state without touching the legacy bus itself. \\
+Replay & Reproducing previously observed traffic during an authorized test, from a recording -- used for bench validation, not for live vehicle operation. \\
+Active translation & Receiving an Alfred-side command and transmitting the corresponding \emph{validated} command onto the existing bus -- the only function that ever puts a new frame on the legacy bus, and the only one gated by Mode~2. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Authorized bidirectional gateway}
+\label{sec:gateway-modes}
+
+The Gateway supports two explicit hardware operating states, not a software flag alone.
+
+\begin{diagram}
+MODE 1 -- PASSIVE (default at power-up)
+        Vehicle ---------> Alfred
+        Vehicle <----X---- Alfred        (TX physically gated off)
+
+MODE 2 -- AUTHORIZED BIDIRECTIONAL
+        Vehicle <--------> Alfred
+   Alfred -> 10BASE-T1S -> Gateway -> translation -> CAN/CAN-FD/LIN -> vehicle
+\end{diagram}
+
+Mode~1 is the safe default; the node must not transmit onto the legacy bus, and where practical this is enforced with a hardware TX-enable gate (transceiver enable pin held off by default), not only by not calling a software transmit function. Mode~2 additionally includes: a physical TX-enable line, watchdog-supervised command timeout (a stale authorization reverts to Mode~1), bus-off detection and handling, error counters, a clear physical/visual indication of current mode, a separate debug enable, an append-only audit log of every frame the Gateway ever transmits, and deterministic reset behavior (reset always re-enters Mode~1). This capability is assumed to be used only on Alfred-owned hardware, customer development vehicles, test benches, or explicitly authorized customer systems -- circumventing OEM security controls is out of scope categorically, not a design constraint to work around.
+
+\subsection{Brownfield bus support priority}
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}p{3.2cm} X@{}}
+\toprule
+\textbf{Tier} & \textbf{Buses} \\
+\midrule
+Mandatory for November & CAN, CAN-FD, 10BASE-T1S \\
+Desired for November & LIN \\
+Optional, after November & 100BASE-T1, 1000BASE-T1, specialized/proprietary buses \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{decision}[title={LIN in Rev~C: schedule-conditional, not guaranteed}]
+Include a LIN transceiver footprint on Rev~B (Section~\ref{sec:rev-b}) at negligible incremental schedule cost, since it shares the same MCU UART resource strategy as CAN-FD bring-up. Whether LIN is \emph{validated and demonstrated} in the November~30 gate depends on Rev~B bring-up going to schedule; if CAN/CAN-FD/T1S validation is behind at the mid-November checkpoint (Section~\ref{sec:schedule}), LIN demonstration is cut first (Section~\ref{sec:feature-cuts}) -- CAN/CAN-FD/T1S validation is never sacrificed to add protocol count.
+\end{decision}
+
+\subsection{Brownfield November demonstration}
+
+\begin{diagram}
+       Device A
+          |
+         CAN
+          |
+       Device B
+          |
+          +-------- Alfred Gateway
+                       |
+                  10BASE-T1S
+                       |
+                    Clicker 4
+
+PHASE A -- PASSIVE
+  Physical event -> legacy bus traffic -> Gateway captures it ->
+  traffic mirrored onto T1S -> Clicker 4 receives it
+
+PHASE B -- BIDIRECTIONAL
+  Clicker 4 -> T1S command -> Gateway -> legacy CAN command ->
+  legacy device -> physical response -> observed and mirrored back
+\end{diagram}
+
+A controlled legacy network (two devices on a CAN segment, on the bench, not a real vehicle) is built specifically for this demonstration -- the point is validated gateway behavior, not sourcing an actual vehicle harness. Phase~A (passive) must show a physical event on the legacy bus arriving at the Clicker~4 as mirrored, timestamped T1S traffic with the Gateway never asserting TX. Phase~B (bidirectional, Mode~2 explicitly enabled) must show a Clicker-originated command reaching the legacy device and producing an observable physical response, with that response captured and mirrored back. Round-trip latency (Clicker command $\rightarrow$ observed physical response $\rightarrow$ mirrored confirmation back at Clicker) is measured per Section~\ref{sec:validation-plan}, not asserted as ``it worked.''

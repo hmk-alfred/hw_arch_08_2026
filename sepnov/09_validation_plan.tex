@@ -1,0 +1,54 @@
+\section{Measurement / Validation Plan}
+\label{sec:validation-plan}
+
+``Communication worked'' is not an accepted result anywhere in this program. Every claim in Sections~\ref{sec:arch-a-demo}, \ref{sec:arch-b}, and \ref{sec:exit-gate} is backed by one of the quantitative procedures below, run the same way every time so results are comparable across Rev~A, Rev~B, and Rev~C.
+
+\subsection{10BASE-T1S metrics}
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}p{3.6cm} X@{}}
+\toprule
+\textbf{Metric} & \textbf{Procedure} \\
+\midrule
+End-to-end / node-to-node latency & Timestamp a command at the Clicker~4 (or coordinator node) and the corresponding action/acknowledgment at the target node using the shared MCU timer/capture channel (Section~\ref{sec:rev-b}); repeat $\geq$50 trials, report median and 95th-percentile. \\
+Jitter & Standard deviation of the same trial set's latency distribution. \\
+PLCA operation & Scope capture of the T1S differential pair showing beacon and transmit-opportunity timing for each populated node ID; confirm against the configured transmit-opportunity count. \\
+Bus utilization & Fraction of available transmit opportunities actually used over a fixed observation window, at the demo's real traffic rate. \\
+Packet loss & Sequence-numbered test frames sent at a known rate over a fixed window; count gaps at the receiver. \\
+Startup time & Time from node power-on to first successful PLCA beacon sync, measured at the coordinator. \\
+Disconnect detection / reconnect time & Physically unplug a follower; measure time-to-declared-offline (if implemented) and, on replug, time-to-resynchronized-communication. \\
+Error recovery & Induce a bus fault (e.g., brief short or termination removal) and measure recovery time to normal operation without a power cycle. \\
+Maximum validated node count & Highest node count at which the above metrics were actually measured, not the datasheet's theoretical maximum. \\
+Power consumption & See power procedures below, per node. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Gateway operation metrics}
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}p{3.6cm} X@{}}
+\toprule
+\textbf{Metric} & \textbf{Procedure} \\
+\midrule
+CAN $\rightarrow$ Gateway latency & Timestamp a CAN frame's arrival at the transceiver (via a reference CAN analyzer on the bench segment) vs. its timestamped capture in Gateway firmware. \\
+Gateway $\rightarrow$ T1S latency & Timestamp Gateway capture vs. the corresponding mirrored frame's appearance on the T1S segment. \\
+T1S $\rightarrow$ Gateway latency & Reverse of the above, for Mode~2 commands originating at the Clicker~4. \\
+Gateway $\rightarrow$ CAN latency & Timestamp Gateway's translated command vs. its appearance on the CAN bus (reference analyzer). \\
+Total round-trip latency & Clicker command issued $\rightarrow$ physical device response observed $\rightarrow$ mirrored confirmation back at Clicker, as one measured interval (Section~\ref{sec:arch-b}), not the sum of the four legs above (to catch any non-additive delay). \\
+Maximum sustained message rate & Increase test-frame rate until drops/errors appear; report the last clean rate. \\
+Dropped messages & Sequence-numbered CAN test frames vs. what the Clicker~4 ultimately receives. \\
+Timestamp accuracy & Compare Gateway-assigned timestamps against the reference CAN analyzer's independent timestamp for the same frames. \\
+CAN error behavior / bus-off recovery & Deliberately induce a bus-off condition (e.g., forced error frames) and measure detection and recovery time. \\
+Passive-mode verification & With Mode~2 disabled, confirm via the reference CAN analyzer that the Gateway \emph{never} asserts TX on the legacy bus, across the full test session -- a negative result that must be actively checked, not assumed. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Power metrics}
+
+Idle current, active current, startup/inrush current, and supply-rail stability (voltage sag under load transient), each measured per node variant (E2B population vs. Gateway population) using the Rev~B/Rev~C current-sense test points (Section~\ref{sec:rev-b}) and reported at both 12\,V and 24\,V input where the program's bench supplies allow.
+
+Every procedure above is written down once and reused verbatim from Rev~A through Rev~C so that a Rev~C number is directly comparable to the Rev~A/B number it superseded -- a changed measurement procedure invalidates the comparison, which defeats the purpose of measuring at all.
