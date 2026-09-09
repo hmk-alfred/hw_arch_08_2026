@@ -1,0 +1,50 @@
+\section{Option A --- Alfred-Native Architecture}
+\label{sec:option-a-overview}
+\label{sec:hardware-design}
+
+A vehicle designed from the start around Alfred: central compute, an Ethernet backbone, and generic edge nodes. Application behavior lives centrally by default; a control loop only runs at the edge when physics forces it there (Section~\ref{sec:acc}).
+
+\begin{diagram}
+   CENTRAL COMPUTE (ACC): App CPU | RT MCU | Ethernet switch/TSN
+                    |
+     100/1000BASE-T1 trunk; 10BASE-T1S multidrop zone spurs
+                    |
+      +-------------+-------------+----------------+
+      |             |             |                |
+   E2B-BODY      E2B-MOTOR     E2B-SENSOR       E2B-LITE
+   Front zone    L/R doors     Cabin climate    Rear lights/
+   (LIN+CAN+     (PWM+ADC+     (SPI/I2C/SENT)   switches
+    PWM+GPIO)     encoder)                      (PWM+GPIO)
+\end{diagram}
+
+\subsection{Central Compute (ACC)}
+\label{sec:acc}
+\begin{itemize}[itemsep=0.1em]
+\item \textbf{AP/RT split, not one SoC:} automotive AP (NXP S32G / Snapdragon Ride / TDA4-class) runs Linux, the Alfred Runtime, Machine IR store, and Deployment Manager; a lockstep RT domain (S32G's own Cortex-M7 cores, or a companion AURIX/SPC58) runs gPTP time distribution and any control loop that must survive an AP crash or OTA reboot (e.g., hazard lights).
+\item \textbf{Integrated TSN Ethernet switch} (SoC-integrated or SJA1110/88Q5050-class) with per-zone VLANs and priority queues so telemetry never starves control traffic.
+\item Independent secure-boot chains for AP and RT rooted in one hardware root of trust; A/B OTA with automatic rollback; RT watchdogs AP liveness and forces safe outputs on failure.
+\item \textbf{Placement rule:} centralize by default; push to the edge only if deadline $<$1~ms, jitter is tight, or the loop must survive a network outage. A 20~kHz current loop never leaves the edge node; a \code{spoiler.set\_position(65\%)} setpoint runs centrally.
+\end{itemize}
+
+\subsection{E2B Edge Node Family}
+\label{sec:e2b-family}
+A small family of boards, not one universal node: common MCU/PHY/power/protection base (S32K3-class automotive MCU), differing only in the analog/driver front end.
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}l l X@{}}
+\toprule
+\textbf{Variant} & \textbf{Network} & \textbf{Front end / role} \\
+\midrule
+E2B-LITE & 10BASE-T1S & GPIO/PWM/ADC --- switches, lamps, simple relays \\
+E2B-MOTOR & 100BASE-T1 & Motor driver + Hall + current sense --- window/seat/spoiler actuators \\
+E2B-SENSOR & 10BASE-T1S & ADC/SPI/I2C/SENT --- precision sensors, occupant sensing \\
+E2B-BODY & 10BASE-T1S & LIN + CAN-FD passthrough --- supplier sub-assemblies; doubles as the legacy-adapter role in Section~\ref{sec:deployment-reprogramming} \\
+E2B-HIGH-SPEED & 1000BASE-T1 & Camera/lidar-class bandwidth \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Every node shares reverse-polarity/load-dump protection, per-channel eFuse, an independent hardware watchdog, secure boot, and one sealed automotive connector family for network+power --- so a node is field-replaceable without harness rework, the concrete form of "hardware becomes interchangeable."
+
+\textbf{Native discovery:} at boot, a node announces a signed capability manifest built at compile time by the Firmware Compiler (Section~\ref{sec:firmware-generation}); confidence is always 1.0 because the manifest attests a known-good build rather than an inference. Alfred registers it directly into the Machine IR (Section~\ref{sec:machine-ir}) with no discovery step required.

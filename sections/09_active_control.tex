@@ -11,7 +11,7 @@
    Safety Policy Engine
    - is this Device's mapping confidence >= promotion threshold?
    - is this semantic capability on the permitted allowlist for
-     Active Test Mode (Section 11.3)?
+     Active Test Mode (Section 9.3)?
    - is current vehicle state consistent with issuing this command?
      (e.g., refuse "open door" while a "vehicle moving" signal,
       if mapped, indicates motion -- fail CLOSED if that signal's
@@ -19,7 +19,7 @@
              |
              v
    Validated Vehicle Mapping (Machine IR Device + ResourceBinding,
-   Section 7)
+   Section 6)
              |
              v
    Protocol Adapter (translates the validated capability call into
@@ -28,7 +28,7 @@
              |
              v
    Vehicle network (transmit path, gated by hardware transmit-enable,
-   Section 11.4)
+   Section 9.2)
 \end{diagram}
 
 The API surface exposed to a user/operator is always \code{vehicle.rear\_left\_indicator.enable()} --- never a raw "send CAN ID 0x311 = 0x10" primitive. Raw frame transmission exists only as an internal, access-controlled engineering tool used to \emph{build} protocol adapters and validate mappings during Structured Experiment Mode; it is not the product surface, and is not reachable by an application built on the Semantic API.

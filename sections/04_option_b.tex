@@ -1,0 +1,38 @@
+\section{Option B --- Alfred Discovery Architecture}
+\label{sec:option-b-overview}
+
+A vehicle whose existing CAN/CAN-FD/LIN/automotive-Ethernet architecture is left intact. The Alfred Probe attaches to accessible networks, passively builds a Vehicle Knowledge Graph (Section~\ref{sec:knowledge-graph}), and --- only once mappings are validated --- enables gated actuation (Section~\ref{sec:active-control}) or, where authorized, firmware replacement (Section~\ref{sec:deployment-reprogramming}). Passive capture and active transmission are architecturally separate; default state is receive-only.
+
+\begin{diagram}
+                    ALFRED ANALYZER (discovery engine)
+                                |
+                       Gigabit Ethernet (isolated)
+                                |
+        +-----------+-----------+-----------+
+        |           |           |           |
+    Probe A     Probe B     Probe C     Probe D
+    CAN/CAN-FD  Automotive  LIN/UART    Analog/PWM/
+                Ethernet                Hall/current
+        |           |           |           |
+   splice into   TAP on      splice into  probe points on
+   CAN-B/CAN-C   100/1000    LIN sub-bus  motor leads
+\end{diagram}
+
+\subsection{Probe Hardware}
+\label{sec:probe-hardware}
+\begin{itemize}[itemsep=0.1em]
+\item \textbf{Distributed, not a single OBD-II dongle:} independently placed, clock-synchronized nodes see multiple physically separate buses at once --- required for the causality inference below, and structurally invisible to a single diagnostic-port device sitting behind a gateway.
+\item \textbf{Modular front ends} (CAN/CAN-FD, LIN, 10/100/1000BASE-T1 tap, UART/RS-485, GPIO/PWM-capture, analog/current-sense), each an MCU-per-module tier feeding an ARM/Linux aggregation host, uplinked to the Analyzer over Gigabit Ethernet.
+\item All nodes are gPTP-synchronized to one grandmaster; sync error is recorded per capture, never assumed to be zero.
+\item \textbf{FPGA front end deliberately deferred:} an MCU-per-module design is sufficient until a unit needs $>$16--24 simultaneous channels or sub-microsecond cross-channel timing is a proven, not hypothetical, requirement.
+\end{itemize}
+
+\subsection{Discovery Pipeline}
+\label{sec:probe-discovery}
+Three levels; 1--2 run automatically on every capture, 3 requires experiment or correlation:
+\begin{enumerate}[itemsep=0.1em]
+\item \textbf{Electrical/protocol ID} --- deterministic signal processing on voltage/edge signatures (``this is CAN, $\sim$500~kbps'').
+\item \textbf{Network protocol recognition} --- deterministic decoders (CAN$\to$ISO-TP$\to$UDS; Ethernet$\to$IP$\to$SOME/IP).
+\item \textbf{Semantic identification} --- Structured Experiment Mode:\label{sec:correlation} an operator triggers an action (``press left turn signal''), all probes record before/during/after, trials repeat $N$ times, and every changed bit/byte is scored by co-occurrence with the action after first excluding rolling counters, checksums, and periodic broadcasts. Confidence accumulates across trials; nothing is asserted from one observation.
+\end{enumerate}
+\textbf{Physical correlation}\label{sec:physical-correlation} adds causality: a command is confirmed to \emph{cause} an effect only if PWM output, current draw, and Hall pulses follow it within the expected electrical time constant --- distinguishing a command from a mere status echo. Imported engineering files (DBC/ARXML/LDF/A2L/ODX) seed high-confidence priors, cross-checked against live traffic rather than trusted blindly. Every mapping is confidence-scored in the graph; only mappings above threshold compile into the Machine IR and become callable through the Semantic API (Section~\ref{sec:machine-ir}).

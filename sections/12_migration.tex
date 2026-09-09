@@ -3,30 +3,30 @@
 
 \begin{diagram}
  PHASE 0: Observe               Legacy vehicle + Alfred Probe
-                                 (Section 10; passive only)
+                                 (Section 4; passive only)
       |
       v
  PHASE 1: Understand            Vehicle Knowledge Graph populated:
                                  machine graph, ECU map, signal map
-                                 (Section 8)
+                                 (Section 7)
       |
       v
  PHASE 2: Control selected      Alfred API -> Alfred Gateway ->
-          functions             legacy network adapter (Section 12.4)
+          functions             legacy network adapter (Section 10.4)
                                  -- non-safety-critical scope only
-                                 (Section 11.3)
+                                 (Section 9.3)
       |
       v
  PHASE 3: Replace selected      old body ECU removed -> Alfred E2B
           ECUs                  node installed in its place, using
                                  the SAME connector/harness point
-                                 where feasible (Section 5.2)
+                                 where feasible (Section 3.2)
       |
       v
  PHASE 4: Collapse network      CAN / LIN islands, now serving fewer
           architecture          and fewer legacy ECUs, are progressively
                                  retired in favor of Ethernet edge
-                                 architecture (Section 5.1/5.2)
+                                 architecture (Section 3.1/3.2)
       |
       v
  PHASE 5: Alfred-native         central compute + Ethernet backbone +

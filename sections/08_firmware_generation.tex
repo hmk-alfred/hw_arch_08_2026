@@ -16,7 +16,7 @@
   capabilities, target node hardware, constraints)
         |
         v   <-- deterministic: schema validation, constraint checking
-  Machine IR (Section 7)
+  Machine IR (Section 6)
         |
         v   <-- deterministic: resource planner
   Resource Planner:
@@ -52,10 +52,10 @@
      - static analysis (MISRA-C class checks, bounds/overflow analysis)
      - unit tests against Verified Primitive Library test suite
      - SIL (software-in-the-loop against a simulated Machine IR)
-     - HIL (Section 12; bench validation against real E2B hardware)
+     - HIL (Section 10; bench validation against real E2B hardware)
         |
         v
-  Signed Binary + Certification Evidence bundle (Section 6.1, item 12)
+  Signed Binary + Certification Evidence bundle (Section 5, item 12)
 \end{diagram}
 
 \subsection{Resource planning is where "AI writes firmware" actually gets replaced}

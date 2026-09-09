@@ -7,15 +7,15 @@
    Identify target ECU (from Machine IR / Vehicle Knowledge Graph)
              |
              v
-   Determine supported programming path (see 12.2 -- must be a
+   Determine supported programming path (see 10.2 -- must be a
    documented/authorized mechanism for THIS ECU; if none exists,
-   go to 12.3 Legacy Adapter path instead)
+   go to 10.3 Legacy Adapter path instead)
              |
              v
    Create/update Machine IR entry for the replacement behavior
              |
              v
-   Generate firmware (Section 9 pipeline, targeting either a
+   Generate firmware (Section 8 pipeline, targeting either a
    replacement E2B node, or -- only where the OEM/Tier-1 has
    authorized custom firmware on THEIR ECU hardware -- that
    ECU's own target pack)
@@ -24,21 +24,21 @@
    SIL  (simulate against Machine IR model of the vehicle)
              |
              v
-   HIL / bench validation (Alfred Lab hardware, Section 15;
+   HIL / bench validation (Alfred Lab hardware, Section 13;
    real target hardware, simulated/recorded vehicle network
    traffic, physical load where applicable e.g. a real motor
    on a bench fixture)
              |
              v
    Create signed deployment artifact (binary + manifest +
-   certification evidence bundle, Section 9)
+   certification evidence bundle, Section 8)
              |
              v
-   Program ECU (mechanism per 12.2)
+   Program ECU (mechanism per 10.2)
              |
              v
    Verify (read-back / checksum verification; functional smoke
-   test via Active Test Mode allowlist, Section 11)
+   test via Active Test Mode allowlist, Section 9)
              |
              v
    Health check (extended monitoring window post-flash before
@@ -70,8 +70,8 @@ Bypassing cryptographic authentication, secure boot, immobilizer logic, or gatew
    Original ECU remains in place, unmodified
              |
              v
-   Alfred Adapter / Gateway (Section 12.4) -- observes and, where
-   validated (Section 11), issues commands through the ECU's own
+   Alfred Adapter / Gateway (Section 10.4) -- observes and, where
+   validated (Section 9), issues commands through the ECU's own
    existing legitimate command surface (its normal CAN/LIN inputs,
    exactly as its original upstream ECU would have driven it)
              |

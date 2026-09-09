@@ -9,8 +9,11 @@ hardware and software architecture design document.
 - `main.tex` — top-level document, `\input`s everything in order.
 - `preamble.tex` — shared packages/styling (diagram environment, tables,
   callout boxes, the `\worklogentry` command).
-- `sections/01_*.tex` … `sections/22_*.tex` — the numbered sections of the
-  document, one file each, matching the final-deliverable structure.
+- `sections/01_*.tex` … `sections/20_*.tex` — the numbered sections of the
+  document, one file each. Section numbers are assigned automatically by
+  LaTeX from `\label`/`\ref`, except inside `diagram` (ASCII) blocks, where
+  section/subsection numbers are typed as plain text and must be updated
+  by hand if a section is added, removed, or reordered (see note below).
 - `sections/99_worklog.tex` — appendix wrapper that pulls in the worklog.
 - `worklog/worklog_entries.tex` — **append-only** log of engineering
   sessions, rendered into the PDF appendix.
@@ -41,3 +44,11 @@ the start of a new session:
    file) and `worklog/WORKLOG.md` (as a new `## YYYY-MM-DD — title`
    section at the end). Do not edit prior entries in either file.
 4. Rebuild with `make` and confirm it compiles cleanly before committing.
+
+## If you add, remove, or reorder a section
+
+Cross-references written as `Section~\ref{sec:label}` update themselves
+automatically. Cross-references typed as plain text *inside a `diagram`
+block* (ASCII art can't contain `\ref`, since `Verbatim` doesn't expand
+macros) do **not** — search for `grep -n 'Section [0-9]' sections/*.tex`
+after any renumbering and fix any hardcoded numbers it finds by hand.

@@ -26,4 +26,4 @@ No prior session existed — this is the baseline. Built PDF via
 
 **Next session TODO:** revisit numeric placeholders once real hardware
 measurements exist; start logging actual MVP0 build progress against the
-roadmap in Section 17.
+roadmap in Section 15 (renumbered as of the 2026-09-08 condensing pass — check the current PDF's table of contents rather than trusting this number going forward).

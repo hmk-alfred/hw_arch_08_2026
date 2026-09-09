@@ -1,9 +1,7 @@
-\section{Detailed Software Design}
+\section{Software Architecture Layers}
 \label{sec:software-design}
 
-\subsection{The layer stack (shared by both options)}
-
-Twelve layers, listed bottom-up. Options A and B differ in \emph{how layers 1--3 get populated}; layers 4 upward are identical code paths regardless of origin.
+Twelve layers, listed bottom-up, shared verbatim by both Option A and Option B. The two options differ only in \emph{how} layers 1--4 get populated --- Option A's Firmware Compiler emits a Machine IR entry directly at build time (Section~\ref{sec:e2b-family}); Option B's Correlation Engine and Graph-to-IR compiler emit one once a mapping clears a confidence threshold (Section~\ref{sec:probe-discovery}, \ref{sec:knowledge-graph}). Everything from layer 5 upward is identical code regardless of which path populated the entry below it, which is the mechanism behind the convergence argument in Section~\ref{sec:convergence}.
 
 \begin{enumerate}
 \item \textbf{Runtime} --- the process(es) executing on the ACC (and, in a thin form, on each E2B node) that host drivers, scheduling, and the network stack. On the ACC: a Linux-hosted supervisor process plus a set of containerized "skills"; on RT domain and E2B nodes: a small deterministic executive (Zephyr-class or bare-metal) running generated driver code.
@@ -40,21 +38,4 @@ Twelve layers, listed bottom-up. Options A and B differ in \emph{how layers 1--3
                    Runtime
 \end{diagram}
 
-\subsection{Option A: populating layers 1--4 directly}
-
-An E2B node's on-boot manifest (Section~\ref{sec:discovery-a}) is generated \emph{by construction} --- the Firmware Compiler already knows, at build time, exactly which HAL drivers and Verified Primitive Library entries were compiled into that node's image, because it generated that firmware. The manifest the node reports at boot is therefore a confirmation/attestation of a known-good build, not a discovery in the Option-B sense. Machine IR population for a greenfield vehicle is consequently near-instant and 100\%-confidence: it is compiled alongside the firmware, not inferred after the fact.
-
-\subsection{Option B: populating layers 1--4 through inference}
-
-The Discovery software stack is the Option-B-specific software that does not exist in Option A, sitting logically \emph{below} the Machine IR layer as an alternative population path:
-
-\begin{itemize}
-\item \textbf{Capture Service} (per probe node, Section~\ref{sec:probe-discovery}) --- protocol-aware frame/event capture with hardware timestamping, writing to a common time-synchronized event log format.
-\item \textbf{Protocol Identification Engine} --- Level 1/2 classification (Section~\ref{sec:probe-discovery}): electrical characterization, bitrate estimation, protocol decode (CAN$\rightarrow$ISO-TP$\rightarrow$UDS, Ethernet$\rightarrow$IP$\rightarrow$SOME/IP), implemented as deterministic decoders, not ML classifiers, because these are well-specified protocols with unambiguous grammars.
-\item \textbf{Correlation Engine} --- Level 3 semantic identification: the statistical machinery (Section~\ref{sec:probe-discovery}) that turns "operator pressed the turn signal at T" plus "CAN-B ID 0x311 bit 4 changed at T+2ms" into a scored candidate mapping.
-\item \textbf{Engineering File Importer} --- parsers for DBC, ARXML, LDF, A2L, ODX that pre-populate candidate signal names/scaling/units, which the Correlation Engine then uses as priors rather than starting from zero.
-\item \textbf{Vehicle Knowledge Graph builder} (Section~\ref{sec:knowledge-graph}) --- assembles Capture Service + Protocol ID + Correlation Engine + imported files into the graph structure, which is what actually gets compiled into Machine IR entries once mappings cross a confidence threshold.
-\item \textbf{Compiler: Graph $\rightarrow$ Machine IR} --- a deterministic step (not inference) that takes a knowledge-graph subtree whose confidence exceeds a configured threshold and mechanically emits a Machine IR device entry plus its network-path/hardware-mapping binding through a legacy protocol adapter (Section~\ref{sec:deployment-reprogramming}).
-\end{itemize}
-
-The key architectural point: everything above the Machine IR layer in Section~6.1 is identical code whether the IR entry was compiled directly (Option A) or produced by the Graph-to-IR compiler (Option B). The Correlation Engine and Graph builder are the only genuinely new software surfaces Option B requires beyond what Option A already needs.
+Option B's population path additionally requires a small set of software surfaces Option A never needs: a Capture Service (per probe node), a Protocol Identification Engine (deterministic Level 1/2 decoders), a Correlation Engine (the Level 3 statistical machinery in Section~\ref{sec:probe-discovery}), an Engineering File Importer (DBC/ARXML/LDF/A2L/ODX), and the Vehicle Knowledge Graph builder (Section~\ref{sec:knowledge-graph}) that compiles a confidence-cleared graph subtree into a Machine IR entry. These are the only genuinely new software components Option B requires beyond what Option A already needs --- everything from layer 5 upward is shared, unmodified code.

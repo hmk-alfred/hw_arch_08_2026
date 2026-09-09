@@ -10,7 +10,7 @@
         v
    Reads onboard config strap / provisioned identity
    (which peripheral front-end variant, which channels populated
-    at manufacturing test -- see Section 5.2 provisioning interface)
+    at manufacturing test -- see Section 3.2 provisioning interface)
         |
         v
    Assembles Capability Manifest (below) from the
@@ -99,7 +99,7 @@ The Machine IR for a vehicle is a graph, not a flat device list, because devices
   +------------------------------------------------------------+
   |                 HARDWARE KNOWLEDGE GRAPH                    |
   |   (cross-vehicle, cross-program -- Alfred's compounding      |
-  |    asset, see Section 19)                                    |
+  |    asset, see Section 17)                                    |
   |                                                                |
   |   MCU parts | transceiver init sequences | verified primitives|
   |   | previously-seen CAN-ID semantic patterns per OEM platform |
@@ -116,7 +116,7 @@ The Machine IR for a vehicle is a graph, not a flat device list, because devices
         (Option A)|                          (Option B)|
    +---------------+------+                +------------+-----------+
    | Native Capability     |                | Vehicle Knowledge Graph |
-   | Manifests (confidence |                | (Section 8) built from  |
+   | Manifests (confidence |                | (Section 7) built from  |
    | = 1.0, emitted by the |                | Capture Data + Protocol |
    | Firmware Compiler)    |                | ID + Correlation Engine |
    +------------------------+                +------------+-----------+
