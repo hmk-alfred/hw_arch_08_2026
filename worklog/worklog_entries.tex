@@ -208,3 +208,29 @@ candidate driver-IC choices against the real reference design before
 schematic freeze -- they are reasoned proposals from public-level
 information only, not confirmed against a datasheet.
 }
+
+\worklogentry{2026-09-09}{Simplified sepnov\_plan.tex: removed inline revision-history narration}{
+User asked to simplify the document and remove references to superseded
+prior content, while keeping the rationale behind design decisions clear.
+The prior session's rewrite (same day) had left several places narrating
+its own history inline -- ``this revision corrects...'', ``unlike the prior
+plan's treatment...'', ``the prior plan proposed X, retained here unless...,
+not re-litigated without cause'', ``same risk as the prior plan'' -- which
+is exactly the kind of clutter the worklog exists to hold instead. Removed
+that framing from: the title-page abstract and subtitle (dropped ``Revision
+2: ...'' and the Revision~1/2 comparison paragraph, now just states scope),
+the executive summary's platform-architecture decision box, and one
+sentence each in \code{11\_rev\_a\_control.tex}, \code{15\_rev\_b\_gateway.tex},
+\code{17\_timeline.tex}, \code{20\_risks.tex} (two spots),
+\code{21\_feature\_cuts.tex}, and \code{23\_final\_questions.tex}. In every
+case the underlying engineering rationale was preserved and restated
+directly (e.g., the STM32G4 decision box now just states the four reasons
+for the part, rather than framing them as ``retained from the prior plan
+unless a reason to change surfaces''). Did not find similar clutter in
+\code{main.tex} (the long-range thesis) or elsewhere in \code{sepnov/}, and
+did not find meaningful redundancy between sections worth cutting (e.g.,
+Section~3's ``why the roles cannot be blurred'' table and Section~6's
+``what is shared'' table are complementary -- silicon-level vs.\
+board-level -- not duplicates). Rebuilt clean: 38 pages, zero undefined
+references, zero overfull-hbox warnings.
+}

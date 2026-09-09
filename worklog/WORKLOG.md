@@ -115,3 +115,18 @@ Architecture A holds at 3 pages, Architecture B at 2 (under the ~3-page cap).
 LAN8660/LAN8661 actually arrive, revisit the candidate driver-IC choices
 (Sections 8/9 of the plan) against the real reference design before
 schematic freeze — they're reasoned proposals from public-level info only.
+
+## 2026-09-09 — Simplified sepnov_plan.tex, removed inline revision history
+
+User asked to simplify the doc and drop references to superseded prior
+content, while keeping design-decision rationale intact. Removed inline
+narration like "this revision corrects...", "unlike the prior plan's
+treatment...", "retained here unless..., not re-litigated without cause"
+from the title page, executive summary, and one sentence each in six other
+section files — that history now lives only in the worklog, where it
+already was in full. The underlying engineering rationale was preserved
+and restated directly everywhere it was removed (e.g., the STM32G4 choice
+is now stated as four direct reasons, not framed as "retained from the
+prior plan"). Checked main.tex and the rest of sepnov/ for the same pattern
+and for redundant sections — found neither. Rebuilt clean: 38 pages, zero
+undefined references, zero overfull warnings.

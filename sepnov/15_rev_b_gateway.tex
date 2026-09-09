@@ -17,8 +17,8 @@
 
 \subsection{MCU selection}
 
-\begin{decision}[title={Retain STM32G4-class MCU as the prototype candidate}]
-The prior plan proposed an STM32G4-class device (e.g., STM32G474) for the Gateway MCU: integrated FDCAN peripherals (CAN-FD without an external controller IC, just a transceiver), ample SPI/UART/ADC/timer resources for the LAN8651 SPI link plus CAN/LIN transceiver control, mainstream toolchain support, and an inexpensive Nucleo board for firmware bring-up in parallel with layout. Retained here unless Rev~0/Rev~A bench work with real FDCAN traffic surfaces a specific reason to change it -- no such reason exists yet, so this is not re-litigated without cause. This is a prototype-phase choice only; production Gateway MCU selection is out of scope (Section~\ref{sec:exec-summary}).
+\begin{decision}[title={STM32G4-class MCU (e.g., STM32G474)}]
+Integrated FDCAN peripherals give CAN-FD without an external controller IC (just a transceiver); ample SPI/UART/ADC/timer resources cover the LAN8651 SPI link plus CAN/LIN transceiver control; mainstream toolchain support and an inexpensive Nucleo board let firmware bring-up run in parallel with layout instead of waiting for Rev~B silicon. This is a prototype-phase choice only -- production Gateway MCU selection is out of scope (Section~\ref{sec:exec-summary}).
 \end{decision}
 
 \subsection{What Rev B-Gateway integrates}
