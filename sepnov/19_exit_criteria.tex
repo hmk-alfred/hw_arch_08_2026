@@ -1,0 +1,49 @@
+\section{November 30 Exit Criteria}
+\label{sec:exit-criteria}
+
+Both architectures must pass. Each line is a specific, checkable claim.
+
+\subsection{Greenfield exit gate}
+
+\begin{itemize}[itemsep=0.1em, label={$\square$}]
+\item Clicker~4 + LAN8651 functioning.
+\item LAN8660 functioning.
+\item LAN8661 functioning.
+\item All three coexist on a T1S segment.
+\item PLCA characterized.
+\item LAN8660 controls a real motor-driver/actuator.
+\item LAN8660 provides observable peripheral state.
+\item LAN8661 controls a real physical lighting load.
+\item Both endpoints operate simultaneously.
+\item Latency measured.
+\item Jitter measured.
+\item Packet loss measured.
+\item Node disconnect/reconnect demonstrated.
+\item Power-cycle recovery demonstrated.
+\item Current/power measurements recorded.
+\end{itemize}
+
+\subsection{Brownfield exit gate}
+
+\begin{itemize}[itemsep=0.1em, label={$\square$}]
+\item Controlled CAN network operational.
+\item Alfred Gateway attached without replacing the network.
+\item Passive mode hardware behavior verified.
+\item Zero Gateway TX while passive verified independently.
+\item CAN traffic captured.
+\item Traffic timestamped.
+\item Traffic normalized/mirrored onto T1S.
+\item Clicker receives mirrored state.
+\item Authorized bidirectional mode explicitly enabled.
+\item Clicker command traverses: Clicker $\rightarrow$ T1S $\rightarrow$ Gateway $\rightarrow$ CAN $\rightarrow$ physical device.
+\item Physical response occurs.
+\item Response mirrored back.
+\item Total round-trip latency measured.
+\item CAN-FD validated if possible.
+\end{itemize}
+
+LIN remains optional if schedule pressure exists (Section~\ref{sec:feature-cuts}).
+
+\begin{decision}[title={How this gate is scored}]
+Every unchecked item is a named gap in the November~30 report, walked explicitly against Section~\ref{sec:measurement} data at the exit review (Section~\ref{sec:timeline}) -- not against demo-day impressions.
+\end{decision}

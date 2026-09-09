@@ -1,0 +1,38 @@
+\section{LAN8660 Validation Plan}
+\label{sec:lan8660-validation}
+
+\subsection{Candidate actuator experiments}
+
+The exact actuator is intentionally not locked until LAN8660 documentation/evaluation hardware review (Section~\ref{sec:cots-bench}) confirms which peripheral-side serial interface (I$^2$C, SPI, or UART) the part actually drives in a given RCP configuration profile. Two low-risk candidates are proposed, both chosen because they are well-documented, cheap, widely available, and match LAN8660's confirmed peripheral-facing interface set:
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}p{3.2cm} X@{}}
+\toprule
+\textbf{Candidate} & \textbf{Why it is low-risk} \\
+\midrule
+I$^2$C-controlled brushed-DC motor driver (e.g., TI DRV8830-class: I$^2$C H-bridge, small brushed DC motor, integrated current limiting and fault reporting) & Directly matches ``motor driver'' in the mandatory requirement; I$^2$C control plus I$^2$C fault/status readback gives both the actuation path \emph{and} the required telemetry path from one part; extremely well documented, breakout boards commercially available for bench use. \textbf{Primary candidate.} \\
+I$^2$C PWM driver feeding a hobby servo (e.g., a PCA9685-class 16-channel I$^2$C PWM driver) & Matches ``servo interface'' in the possible-category list; PCA9685 is ubiquitous, well documented, and gives clean position-command semantics if LAN8660's own peripheral output is PWM-shaped rather than register-shaped. \textbf{Alternate candidate}, used if the DRV8830 path turns out not to match LAN8660's actual interface profile. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Decision criterion: whichever candidate matches the serial interface and voltage/current profile of Microchip's actual LAN8660 reference design (once secure documentation arrives) is selected; if documentation is delayed past the Rev~A schematic deadline (Section~\ref{sec:timeline}), default to the I$^2$C DRV8830 path, since I$^2$C is the interface most consistently cited across all public LAN866x material.
+
+\subsection{Telemetry/state requirement}
+
+The mandatory ``at least one useful state/telemetry path'' (Section~\ref{sec:arch-a-proof}) is satisfied by reading back the driver IC's own status/fault register over the same I$^2$C bus and publishing it through LAN8660's RCP-managed reporting path -- no additional sensor is required for the minimum proof, though a simple position/speed feedback signal (e.g., a Hall sensor on the motor) is a reasonable stretch addition if schedule allows.
+
+\subsection{Validation steps}
+
+\begin{enumerate}[itemsep=0.1em]
+\item Confirm RCP/MPLAB Network Creator configuration workflow on evaluation hardware (or Rev~A, if evaluation hardware is unavailable) -- can a control-endpoint profile be created, loaded, and confirmed active.
+\item Confirm the peripheral-side serial interface is electrically live and addressable (bus scan / register read against the chosen driver IC).
+\item Issue a network command from the Clicker~4 and confirm the driver IC receives the corresponding command on its local bus (logic analyzer on the I$^2$C/SPI/UART line, independent of trusting the physical actuator response alone).
+\item Confirm the physical actuator moves/responds correctly to the command.
+\item Confirm the driver IC's status/fault register is readable and that its value is observable back at the Clicker~4 via LAN8660's telemetry path.
+\item Repeat with a second command value to confirm the path is not simply latched/stuck (a single successful command is not sufficient evidence).
+\item Run alongside LAN8661 on the same segment (Section~\ref{sec:arch-a-proof}) and confirm no interference.
+\end{enumerate}
+
+If any step blocks, classify the blocker per Section~\ref{sec:timeline}'s October~10 gate (documentation, tool access, configuration, PCB, network, peripheral interface, or actual silicon limitation) rather than carrying an unexamined assumption forward.

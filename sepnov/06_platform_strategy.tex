@@ -1,0 +1,56 @@
+\section{Alfred T1S Hardware Platform Strategy}
+\label{sec:platform-strategy}
+
+The E2B endpoints and the Gateway do not use identical silicon, and one PCB does not become both by population. The platform is a shared \emph{electrical and mechanical philosophy}, realized as sibling node classes.
+
+\begin{diagram}
+                  ALFRED T1S PLATFORM
+
+             common network philosophy
+             common power philosophy
+             common connectors
+             common protection
+             common mechanical language
+             common instrumentation
+             common validation
+             common manufacturing/test approach
+                         |
+          +--------------+---------------+
+          |              |               |
+          v              v               v
+
+     E2B-CONTROL     E2B-LIGHTING      GATEWAY
+
+       LAN8660         LAN8661       MCU + LAN8651
+          |               |              |
+      actuator          lighting     CAN/CAN-FD/LIN
+\end{diagram}
+
+\subsection{What is shared, and what is not}
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}p{3.6cm} X@{}}
+\toprule
+\textbf{Shared where technically sensible} & \textbf{Deliberately not shared} \\
+\midrule
+12/24\,V input architecture & Network silicon (LAN8660 vs.\ LAN8661 vs.\ LAN8650/1) -- role-specific by design \\
+Protection components/philosophy (reverse-polarity, TVS, overcurrent) & MCU presence -- E2B-Control and E2B-Lighting have none; Gateway requires one \\
+T1S connector and termination strategy & Peripheral-side interface circuitry (motor-driver path vs.\ LED-driver path vs.\ CAN/CAN-FD/LIN transceivers) \\
+Board outline and mounting pattern, where practical & Firmware -- E2B endpoints run none at all; only the Gateway has an Alfred-authored firmware image \\
+Status-indication style & \\
+Current/voltage measurement approach and accessible test points & \\
+Labeling conventions & \\
+Fabrication process and test-fixture philosophy & \\
+Documentation structure & \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{decision}[title={Explicit guardrail}]
+Do not introduce additional MCU silicon into the LAN8660/LAN8661 E2B designs merely to make them resemble the Gateway board. Any argument for adding a companion MCU to an E2B node must be justified by an actual E2B requirement (Sections~\ref{sec:lan8660-validation}, \ref{sec:lan8661-validation}) discovered during Rev~A/B bring-up, never by a desire for platform symmetry.
+\end{decision}
+
+\subsection{Why this is still ``one platform''}
+
+A customer-facing board from any of the three node classes should be visually and electrically recognizable as one product family (shared connector, shared power input behavior, shared status-LED language, shared test-point layout convention) even though the PCBs are not derived from one shared Gerber file. The commonality that actually matters commercially -- one 10BASE-T1S electrical layer, one validation discipline, one manufacturing/test philosophy -- survives intact; the commonality that does not matter (identical silicon) is not manufactured artificially.

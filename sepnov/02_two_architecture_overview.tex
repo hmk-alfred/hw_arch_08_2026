@@ -1,0 +1,57 @@
+\section{Revised Two-Architecture Overview}
+\label{sec:two-arch}
+
+10BASE-T1S is Alfred's initial wedge, but what it offers differs by customer starting point.
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}p{3.4cm} X@{}}
+\toprule
+\textbf{Customer} & \textbf{Value proposition} \\
+\midrule
+Clean-sheet & Adopt Alfred's Ethernet-native electrical infrastructure directly. Peripherals attach through MCU-less endpoint silicon (LAN8660/LAN8661) -- no per-node firmware to write, own, or update. \\
+Existing vehicle & Keep the existing E/E architecture exactly as it is. Attach Alfred through Gateway hardware that observes, timestamps, and represents that architecture on an Alfred-facing 10BASE-T1S pseudo-bus, with an explicitly gated path to authorized bidirectional control. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{diagram}
+                        ALFRED
+
+                    10BASE-T1S
+                         |
+             +-----------+-----------+
+             |                       |
+             v                       v
+
+      CLEAN-SHEET                 BROWNFIELD
+      NEW PROGRAM              EXISTING PROGRAM
+             |                       |
+       direct E2B                 Gateway
+       endpoints                    |
+             |                 CAN/CAN-FD/LIN
+             v                       |
+       peripherals               existing ECUs
+\end{diagram}
+
+\subsection{What each side is actually built from}
+
+\begin{diagram}
+   GREENFIELD SIDE                       BROWNFIELD SIDE
+
+   Clicker 4 (temporary central node)    Clicker 4 (temporary central node)
+        |                                     |
+     LAN8651 (host MAC-PHY)                LAN8651 (host MAC-PHY)
+        |                                     |
+   10BASE-T1S ---------------------------- 10BASE-T1S
+        |                                     |
+   +----+----+                          Alfred Gateway
+   |         |                          (MCU + LAN8651)
+   v         v                                |
+ LAN8660  LAN8661                    CAN / CAN-FD / LIN transceivers
+   |         |                                |
+ motor    LED                          existing vehicle network
+ driver   driver                       (unmodified, still operating)
+\end{diagram}
+
+Both sides put a device on the \emph{same} 10BASE-T1S electrical layer, using the \emph{same} host-side MAC-PHY part (LAN8651) wherever a programmable MCU needs network access. What differs is what sits on the peripheral side of that network: fixed-function, MCU-less endpoint silicon for a clean-sheet peripheral (Section~\ref{sec:hardware-roles}), versus a programmable Gateway MCU translating an entire pre-existing legacy network (Section~\ref{sec:arch-b}). The commercial argument to a customer is exactly this symmetry: whichever side they start on, they land on the same wire, and the same Clicker~4 (standing in for Alfred's eventual central compute) sees both.

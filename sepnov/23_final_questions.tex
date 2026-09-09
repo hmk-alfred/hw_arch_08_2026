@@ -1,0 +1,51 @@
+\section{Final Questions, Answered Directly}
+\label{sec:final-questions}
+
+\begin{enumerate}[itemsep=0.4em]
+
+\item \textbf{What exact COTS boards should be ordered immediately?}
+Three or more MikroE Two-Wire ETH Click boards (LAN8651-based, MIKROE-5543 and/or MIKROE-6550), one Microchip EVB-LAN8670-USB, Clicker~4 hardware/accessories, and CAN/CAN-FD bench hardware -- plus LAN8660/LAN8661 samples or evaluation hardware if distribution shows them available at order time (Section~\ref{sec:cots-bench}).
+
+\item \textbf{What Microchip documentation/tool access must be obtained immediately?}
+Secure/NDA datasheet access for both LAN8660 and LAN8661, their reference schematics/layouts/BOMs, errata, RCP documentation, MPLAB Network Creator, example RCP configurations, engineering samples, and FAE assistance -- submitted September~8/9, treated as the program's single highest-leverage Week~1 action (Section~\ref{sec:cots-bench}).
+
+\item \textbf{What is the minimum LAN8660 actuator experiment?}
+An I$^2$C-controlled brushed-DC motor driver (DRV8830-class) commanded from the Clicker~4 through LAN8660, with the driver IC's own fault/status register read back as the required telemetry path -- both the actuation and the telemetry requirement satisfied by one part (Section~\ref{sec:lan8660-validation}).
+
+\item \textbf{What LED-driver architecture should temporarily be used for LAN8661?}
+An I$^2$C automotive-grade constant-current LED driver (PCA9955B-class, with per-channel fault diagnostics) as the primary candidate, with a general-purpose I$^2$C LED driver (TLC59116-class) as a bench fallback -- not WS2812/WS2814 unless Microchip's actual reference architecture confirms that specific signaling path is natively supported (Section~\ref{sec:lan8661-validation}).
+
+\item \textbf{What must Rev A-Control expose?}
+LAN8660, the T1S pair with coupling/termination, all useful configuration pins, I$^2$C/SPI/UART peripheral interfaces, independent test I/O, current/voltage measurement, status indicators, and a generic (interface-agnostic) expansion connector for the not-yet-finalized actuator circuit (Section~\ref{sec:rev-a-control}).
+
+\item \textbf{What must Rev A-Light expose?}
+The same shared infrastructure as Rev~A-Control (power, T1S connector/termination, monitoring, test points, mounting, status indicators) plus LAN8661's lighting-specific interface, test points on the lighting-driver control bus, power measurements isolating driver current from LAN8661's own consumption, and a connection to the selected LED-driver hardware (Section~\ref{sec:rev-a-light}).
+
+\item \textbf{What does October 10 need to prove?}
+That LAN8660 and LAN8661 both show meaningful, measured physical functionality -- real actuator motion and real lighting control, both network-commanded, both with a state/telemetry path -- on Rev~A hardware, together with the Clicker~4 on one PLCA segment (Section~\ref{sec:rev-a-light}). If either has not, the blocker is explicitly classified (documentation, tool access, configuration, PCB, network, peripheral interface, or actual silicon limitation) before any Rev~B work proceeds on that part.
+
+\item \textbf{What must Rev B prove before Rev C begins?}
+That both customer architectures work \emph{reliably} (repeated trials, not a single successful run) on Rev~B hardware: Clicker~4 + LAN8660 + LAN8661 for Greenfield, and Gateway + CAN bench network + Clicker~4 for Brownfield, against the full measurement matrix (Section~\ref{sec:rev-b-gateway}). If either does not, Rev~C does not start.
+
+\item \textbf{What exact T1S measurements must exist by November?}
+The full list in Section~\ref{sec:t1s-plca} (link bring-up, PLCA operation/coordinator behavior/node-ID/transmit opportunities, end-to-end and node-to-node latency with p50/p95, jitter, packet loss, bus utilization, sustained clean rate, cold-start time, disconnect/reconnect, power-cycle recovery, termination and cable/topology sensitivity, error recovery, node power consumption, and maximum node count actually tested) -- captured on the Clicker/LAN8660/LAN8661 configuration specifically, not only on the generic COTS reference network.
+
+\item \textbf{What exact physical experiment proves LAN8660 is viable as an Alfred E2B?}
+The full validation sequence in Section~\ref{sec:lan8660-validation}: RCP configuration confirmed, peripheral bus confirmed live, a network command observed on the local bus independent of the physical actuator, the actuator physically responding correctly, the driver IC's status readable back at the Clicker, the result repeated with a different command value, and all of the above still working with LAN8661 active on the same segment.
+
+\item \textbf{What exact physical experiment proves LAN8661 is viable as an Alfred E2B?}
+The equivalent sequence in Section~\ref{sec:lan8661-validation}: RCP lighting configuration confirmed, peripheral bus confirmed live, a network lighting command observed on the local bus, the physical LED load responding correctly, repeated with a different value, and still working with LAN8660 active on the same segment without PLCA timing disruption.
+
+\item \textbf{What exact experiment proves the Brownfield Gateway architecture?}
+The two-phase test in Section~\ref{sec:arch-b}: Phase~1 (passive) -- a physical event on the bench CAN network arrives at the Clicker~4 as mirrored, timestamped T1S traffic with the Gateway's TX independently confirmed at zero; Phase~2 (authorized bidirectional) -- a Clicker-issued command traverses T1S $\rightarrow$ Gateway $\rightarrow$ CAN $\rightarrow$ physical device, produces an observed physical response, and that response is mirrored back, with total round-trip latency measured.
+
+\item \textbf{Is November 30 realistic?}
+The core proof (both exit gates, Section~\ref{sec:exit-criteria}, run on Rev~B hardware) is realistic \emph{if} Microchip's secure documentation access arrives with enough lead time to inform the Rev~A schematic, and if Rev~A's October~10 gate passes on schedule. It is \emph{not} realistic to also guarantee a polished Rev~C, LIN, and a second LAN8660 node in the same window without slack -- those are explicitly conditional (Section~\ref{sec:feature-cuts}). The single largest schedule risk this revision carries, that the prior revision did not, is Microchip documentation lead time, which this plan does not control.
+
+\item \textbf{What should be cut first if the timeline slips?}
+Follow Section~\ref{sec:feature-cuts} exactly: LIN, then any protocol beyond CAN/CAN-FD, then the second LAN8660 node, then Rev~C, before touching LAN8660 or LAN8661 validation scope itself, which remain protected at the highest priority alongside the T1S reference network and PLCA validation.
+
+\item \textbf{What is the single most convincing November customer demonstration?}
+The side-by-side demonstration in Section~\ref{sec:final-demo}: one Clicker~4, one T1S segment, LAN8660 and LAN8661 driving real physical loads on one side, an Alfred Gateway mirroring and then authoritatively commanding a live legacy CAN device on the other -- closing on the single fact that both ran on the same wire. That sentence, not either demo alone, is what proves 10BASE-T1S as Alfred's common electrical-infrastructure wedge.
+
+\end{enumerate}

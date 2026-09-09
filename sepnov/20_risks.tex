@@ -1,0 +1,21 @@
+\section{Major Risks}
+\label{sec:risks}
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}p{3.6cm} X@{}}
+\toprule
+\textbf{Risk} & \textbf{Assessment / mitigation} \\
+\midrule
+Microchip secure-documentation access does not arrive in time & This is the single highest-leverage dependency in the whole program (Section~\ref{sec:cots-bench}) and its timeline is not under Alfred's control. Mitigation: request it September~8/9, escalate if no response by end of Week~1, and have an explicit fallback -- design Rev~A from the public sell-sheet-level description alone (Section~\ref{sec:hardware-roles}) if secure access has not arrived by the Rev~A schematic deadline, accepting more Rev~A bring-up risk in exchange for not stalling the schedule. \\
+LAN8660/LAN8661 real interface does not match the assumed I$^2$C-first candidates & Sections~\ref{sec:lan8660-validation}/\ref{sec:lan8661-validation} deliberately propose two candidates each and defer final selection to documentation review specifically to hedge this; the risk is schedule slip if the real interface requires a different driver-IC family late, not a fundamental architecture failure. \\
+No dedicated Microchip evaluation board exists for LAN8660/LAN8661 & Confirmed absent from public distribution as of the prior research pass. Mitigation: Rev~A \emph{is} the evaluation board in this program, which is why its design must proceed even if secure documentation is incomplete, using maximum observability (Sections~\ref{sec:rev-a-control}, \ref{sec:rev-a-light}) to compensate for the lack of a vendor reference platform. \\
+PLCA coexistence between the LAN866x endpoint family and the LAN865x MAC-PHY family is unconfirmed & The public LAN8660/8661 sell sheet does not explicitly confirm PLCA in the same terms as the LAN8650/1 and LAN8670/1/2 documentation does. Mitigation: this is exactly what Section~\ref{sec:t1s-plca}'s three-node test (Clicker/LAN8651 + LAN8660 + LAN8661 together) exists to establish empirically in Week~2/October, before Rev~B commits to the assumption. \\
+Five PCB variants (Rev~A$\times$2, Rev~B$\times$3) in a 12-week window & More board programs than the prior single-common-node plan, which trades some schedule margin for the correctness of not forcing incompatible silicon onto one board. Mitigation: Rev~A-Control/Light share layout/BOM/review effort tightly (Section~\ref{sec:platform-strategy}) to recover some of that margin; Rev~C is the explicit shock absorber if schedule slips (Section~\ref{sec:feature-cuts}). \\
+Actuator/LED-driver selection made under schedule pressure without full documentation & The October~10 gate exists specifically to force an early, evidence-based checkpoint on this rather than letting an unvalidated choice ride silently into Rev~B (Section~\ref{sec:timeline}). \\
+STM32G4 FDCAN peripheral/driver maturity (Gateway only) & Same risk as the prior plan: integrated FDCAN shifts risk into MCU peripheral driver correctness. Mitigation unchanged: bring up FDCAN on a Nucleo board in parallel with Rev~B-Gateway schematic capture, not serially after. \\
+Hardware TX-enable gating implemented incorrectly & The single most safety-relevant design element in the Gateway (Section~\ref{sec:gateway-modes}); Mode~1/Mode~2 behavior is scored as its own first-class item in the validation matrix, not folded into general bring-up. \\
+Bench CAN network is not representative of a real vehicle & Explicit, accepted limitation of a September--November program -- the controlled bench network (Section~\ref{sec:arch-b}) validates Gateway behavior, not real-vehicle bus loading or OEM-specific error handling. \\
+\bottomrule
+\end{tabularx}
+\end{center}

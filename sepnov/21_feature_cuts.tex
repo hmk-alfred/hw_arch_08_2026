@@ -1,0 +1,37 @@
+\section{Feature-Cut Priorities}
+\label{sec:feature-cuts}
+
+This program is not optimized around producing the maximum number of boards. It is optimized around reaching November~30 with measured evidence that LAN8660~+~LAN8661 make the Greenfield Alfred E2B architecture viable, and MCU~+~LAN8651 makes the Brownfield Alfred Gateway architecture viable, with 10BASE-T1S as the common wedge.
+
+\subsection{Protect at all costs}
+
+\begin{enumerate}[itemsep=0.1em]
+\item Known-good T1S reference network (Section~\ref{sec:cots-bench}).
+\item LAN8660 validation (Section~\ref{sec:lan8660-validation}).
+\item LAN8661 validation (Section~\ref{sec:lan8661-validation}).
+\item PLCA validation (Section~\ref{sec:t1s-plca}).
+\item Rev A.
+\item Rev B.
+\item Greenfield proof (Section~\ref{sec:arch-a-proof}).
+\item CAN Brownfield Gateway (Section~\ref{sec:arch-b}).
+\item Passive mode.
+\item Authorized bidirectional mode.
+\item Quantitative T1S validation (Section~\ref{sec:measurement}).
+\end{enumerate}
+
+\subsection{Cut first}
+
+\begin{itemize}[itemsep=0.1em]
+\item LIN.
+\item 100BASE-T1 / 1000BASE-T1.
+\item Large node counts (beyond the mandatory minimum plus the preferred second LAN8660).
+\item Additional peripheral types beyond the mandatory motor-driver/actuator and lighting paths.
+\item Sophisticated enclosure.
+\item Additional Gateway protocols.
+\item Cosmetic features.
+\item Rev~C, if necessary.
+\end{itemize}
+
+\begin{decision}[title={LAN8660 and LAN8661 are explicitly not on the cut list}]
+Unlike the prior plan's treatment of these parts as secondary, they are now protected at the same priority as the T1S reference network itself -- cutting either one removes the entire Greenfield proof, not a feature of it. If schedule pressure threatens them specifically, the response is to cut everything in the ``cut first'' list before touching either part's validation scope, and, if truly necessary, to reduce the Greenfield demo to the single-mandatory-LAN8660 configuration (Section~\ref{sec:arch-a}) rather than dropping LAN8660 or LAN8661 altogether.
+\end{decision}

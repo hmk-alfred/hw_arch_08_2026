@@ -134,3 +134,77 @@ real datasheet pinout tables before finalizing the dual-footprint layout,
 since that recommendation was made from product-brief-level sourcing, not a
 full datasheet pin-by-pin diff.
 }
+
+\worklogentry{2026-09-09}{Revision 2 of sepnov\_plan.tex: LAN8660/LAN8661 promoted to mandatory Greenfield endpoints, common-node premise retired}{
+The user revised the Sept--Nov plan's hardware architecture based directly on
+the LAN8660/LAN8661 finding from the 2026-09-08 session and a follow-up
+discussion about whether those parts could be shared across the Greenfield
+and Brownfield architectures. Conclusion reached in discussion and confirmed
+by the user's new instructions: they cannot be shared as silicon (RCP is not
+a general transport an MCU can drive arbitrary payloads through, and their
+I\textsuperscript{2}C/SPI/UART pins face outward to peripherals, not inward
+to a host controller), so the prior plan's ``one MCU+LAN8651 PCB becomes
+either E2B or Gateway by population'' premise is retired entirely. New
+architecture: LAN8660 (Control Endpoint) and LAN8661 (Lighting Endpoint) are
+now \emph{mandatory}, first-class Greenfield E2B devices -- not a
+secondary/time-boxed investigation as Revision~1 treated them -- used
+MCU-less and RCP-managed, with zero Alfred firmware at the edge. LAN8651
+remains the host-side MAC-PHY, used only behind a programmable MCU (the
+Clicker~4, and the Brownfield Gateway MCU). The three node classes (E2B-
+Control/LAN8660, E2B-Lighting/LAN8661, Gateway/MCU+LAN8651) are now
+``platform siblings'' sharing power/protection/connector/mechanical/
+validation philosophy, not schematics.
+
+This is a substantial rewrite: all 15 files under \code{sepnov/} from the
+2026-09-08 session were removed and replaced with 23 new files
+(\code{01\_executive\_summary.tex} through \code{23\_final\_questions.tex})
+matching the user's new 22-part report structure plus a final-questions
+section, with \code{sepnov\_plan.tex}'s input list updated to match.
+\code{main.tex} (the long-range thesis) is untouched.
+
+Before writing, did additional targeted research (WebSearch/WebFetch) on
+LAN8660/LAN8661's actual peripheral-side interface to responsibly propose
+the actuator and LED-driver experiments the user asked for rather than
+guessing: confirmed (via Microchip's public VelocityDRIVE sell sheet,
+DS00006257C, and secondary sources) that both parts expose
+I\textsuperscript{2}C/SPI/UART digital I/O on their peripheral side, but
+found that \emph{no pin-exact datasheet, register map, or reference
+schematic is publicly available} -- that level of detail is gated behind
+Microchip's secure/NDA documentation program, matching the user's own
+Week-1 task to request it. This is now called out explicitly and repeatedly
+in the document (Sections 3, 7) as the program's single highest-leverage,
+least-controllable dependency, with an honest ``design Rev~A from
+public-level information alone if secure access is late'' fallback rather
+than pretending the documentation gap doesn't exist. Also could not confirm
+public documentation explicitly states PLCA support for the LAN866x
+endpoint family in the same terms as the LAN8650/1 and LAN8670/1/2 families
+-- flagged as an open risk (Section 20) resolved empirically by the
+three-node PLCA test in Section 10, not assumed.
+
+Proposed, with stated rationale and explicit ``confirm once documentation
+arrives'' caveats: an I\textsuperscript{2}C DRV8830-class motor driver
+(primary) or a PCA9685-class I\textsuperscript{2}C PWM/servo driver
+(alternate) for the LAN8660 actuator experiment; a PCA9955B-class
+automotive-grade I\textsuperscript{2}C constant-current LED driver
+(primary) or TLC59116-class general-purpose I\textsuperscript{2}C LED
+driver (alternate) for LAN8661, explicitly not WS2812/WS2814 absent
+confirmation that LAN8661's actual reference architecture supports that
+single-wire timing-critical protocol.
+
+PCB revision structure changed from 3 boards (Rev A, B, C) to 5 (Rev
+A-Control, Rev A-Light, then Rev B-Control, Rev B-Light, Rev B-Gateway,
+converging to one Rev C family) -- flagged as its own named risk (Section
+20) since it is more board programs in the same 12-week window, traded
+deliberately for not forcing incompatible silicon onto one board. October~10
+and November~15 hard gates preserved from the user's structure as explicit
+go/no-go checkpoints. Rebuilt clean: 37 pages, zero undefined references,
+zero overfull-hbox warnings (fixed one 0.38cm overfull by widening a table
+column). Architecture A holds at 3 pages, Architecture B at 2 pages (under
+the ~3-page cap, which is fine).
+
+Next session should: as soon as Microchip secure documentation or eval
+hardware for LAN8660/LAN8661 actually arrives, revisit Sections 8/9's
+candidate driver-IC choices against the real reference design before
+schematic freeze -- they are reasoned proposals from public-level
+information only, not confirmed against a datasheet.
+}

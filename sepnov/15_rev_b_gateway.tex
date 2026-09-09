@@ -1,0 +1,57 @@
+\section{Rev B-Gateway --- Gateway Node}
+\label{sec:rev-b-gateway}
+
+\begin{diagram}
+            CAN/CAN-FD
+                 |
+             transceiver
+                 |
+                MCU
+                 |
+               SPI
+                 |
+              LAN8651
+                 |
+            10BASE-T1S
+\end{diagram}
+
+\subsection{MCU selection}
+
+\begin{decision}[title={Retain STM32G4-class MCU as the prototype candidate}]
+The prior plan proposed an STM32G4-class device (e.g., STM32G474) for the Gateway MCU: integrated FDCAN peripherals (CAN-FD without an external controller IC, just a transceiver), ample SPI/UART/ADC/timer resources for the LAN8651 SPI link plus CAN/LIN transceiver control, mainstream toolchain support, and an inexpensive Nucleo board for firmware bring-up in parallel with layout. Retained here unless Rev~0/Rev~A bench work with real FDCAN traffic surfaces a specific reason to change it -- no such reason exists yet, so this is not re-litigated without cause. This is a prototype-phase choice only; production Gateway MCU selection is out of scope (Section~\ref{sec:exec-summary}).
+\end{decision}
+
+\subsection{What Rev B-Gateway integrates}
+
+\begin{itemize}[itemsep=0.1em]
+\item CAN-FD (via the MCU's integrated FDCAN peripheral plus an external transceiver).
+\item Optional LIN transceiver.
+\item Hardware TX enable, safe default = disabled (Section~\ref{sec:gateway-modes}).
+\item Watchdog, independent of MCU firmware health.
+\item Protected 12/24\,V input, same protection philosophy as the E2B boards (Section~\ref{sec:platform-strategy}).
+\item Rail voltage and current monitoring.
+\item Debug/programming access (SWD).
+\item LAN8651 for T1S access.
+\end{itemize}
+
+\subsection{Rev B pass gate (both architectures)}
+
+Rev~B must prove \emph{both} customer architectures, not either in isolation:
+
+\begin{diagram}
+GREENFIELD                              BROWNFIELD
+
+    Clicker + LAN8651                       CAN devices
+          |                                     |
+       T1S                                    Gateway
+      /   \                                     |
+LAN8660  LAN8661                             LAN8651
+   |        |                                   |
+actuator  lighting                             T1S
+                                                 |
+                                              Clicker
+\end{diagram}
+
+\begin{decision}[title={Rev B is the load-bearing deliverable}]
+If both systems do not work reliably on Rev~B hardware, do not rush to Rev~C. Rev~C exists to make an already-proven architecture presentable (Section~\ref{sec:rev-c}); it cannot substitute for validation that did not happen on Rev~B.
+\end{decision}

@@ -1,0 +1,55 @@
+\section{COTS Development Bench}
+\label{sec:cots-bench}
+
+Before any custom Alfred board is trusted, build a known-good T1S reference network entirely from commercial hardware. This is Revision~0 -- not an Alfred PCB.
+
+\begin{diagram}
+                         Development PC
+                              |
+                             USB
+                              |
+                    EVB-LAN8670-USB
+                              |
+             ==============================
+                       10BASE-T1S
+             ==============================
+                   |                 |
+                   v                 v
+
+               LAN8651          LAN8651
+               Click board      Click board
+                   |                 |
+                Clicker        optional node
+\end{diagram}
+
+The PC-side EVB-LAN8670-USB adapter gives an independent observation point that does not depend on any Alfred firmware or Alfred hardware -- if a problem appears, this bench isolates whether it is a network/topology issue or an Alfred-specific one.
+
+\subsection{Procure immediately}
+
+\begin{itemize}[itemsep=0.1em]
+\item Multiple ($\geq$3) LAN8651-based MikroE Two-Wire ETH Click boards (MIKROE-5543 and/or MIKROE-6550) -- enough to validate a multidrop segment before Alfred custom hardware arrives.
+\item Microchip EVB-LAN8670-USB.
+\item Required Clicker~4 hardware/accessories.
+\item CAN/CAN-FD bench hardware (reference analyzer, bench transceivers, cabling).
+\item LAN8660/LAN8661 samples or evaluation hardware, \emph{if} available through Microchip Direct/distribution at time of ordering (Section~\ref{sec:hardware-roles} notes that no dedicated EVB was found for these parts as of the prior research pass -- confirm current availability before assuming none exists).
+\end{itemize}
+
+\subsection{Request from Microchip immediately (Week~1 critical-path dependency)}
+
+\begin{itemize}[itemsep=0.1em]
+\item LAN8660 secure/NDA datasheet access.
+\item LAN8661 secure/NDA datasheet access.
+\item Reference schematics and reference layouts for both parts.
+\item BOMs for any reference design.
+\item Errata.
+\item RCP (Remote Control Protocol) documentation.
+\item MPLAB Network Creator (tool access/license).
+\item Example RCP configurations for control and lighting endpoint use cases.
+\item Engineering samples.
+\item Endpoint evaluation boards, if any exist beyond what public search identified.
+\item Field Applications Engineer (FAE) assistance -- specifically to validate the actuator/LED-driver interface assumptions in Sections~\ref{sec:lan8660-validation}/\ref{sec:lan8661-validation} before Rev~A schematic freeze.
+\end{itemize}
+
+\begin{risknote}[title={This is a real, unbounded-duration dependency}]
+Everything in Sections~\ref{sec:rev-a-control}--\ref{sec:rev-a-light} depends on this access arriving with enough lead time to inform a schematic. Microchip's response time to an NDA/secure-documentation request is not something this plan can schedule with confidence -- treat it as the single highest-leverage phone call/email of Week~1, escalate immediately if no response by end of Week~1, and have a documented fallback (Section~\ref{sec:risks}) for designing Rev~A from public sell-sheet-level information alone if secure access has not arrived by the Rev~A schematic deadline.
+\end{risknote}

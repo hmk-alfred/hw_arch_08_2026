@@ -1,0 +1,14 @@
+\section{Rev B-Light --- E2B-Lighting Node}
+\label{sec:rev-b-light}
+
+LAN8661-based lighting E2B, built up from Rev~A-Light's validated circuit (Section~\ref{sec:rev-a-light}).
+
+\begin{itemize}[itemsep=0.1em]
+\item Sensible protected power (same philosophy as Rev~B-Control, Section~\ref{sec:platform-strategy}).
+\item The selected LED-driver interface (Section~\ref{sec:lan8661-validation}), no longer a generic breakout.
+\item A real lighting load, sized to be visually convincing in a customer demonstration, not just electrically present.
+\item Measurements: supply current with load on/off, LED-driver fault-register readback where available.
+\item Robust connectors and test points, matching Rev~B-Control's connector family.
+\end{itemize}
+
+Same discipline as Rev~B-Control: no new architecture beyond what Rev~A already validated, only robustness and the now-finalized peripheral interface.

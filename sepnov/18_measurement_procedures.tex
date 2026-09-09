@@ -1,0 +1,50 @@
+\section{Measurement Procedures}
+\label{sec:measurement}
+
+Every metric named in Section~\ref{sec:t1s-plca} and the exit criteria (Section~\ref{sec:exit-criteria}) is captured the \emph{same way} on Rev~A, Rev~B, and Rev~C, so results are directly comparable across revisions. ``Communication worked'' is never an accepted result.
+
+\subsection{10BASE-T1S / PLCA metrics}
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}p{3.4cm} X@{}}
+\toprule
+\textbf{Metric} & \textbf{Procedure} \\
+\midrule
+Node count, PLCA node IDs, transmit-opportunity count & Recorded configuration state at time of test, read back from each node's RCP/PLCA registers where accessible. \\
+End-to-end / node-to-node latency, p50/p95 & Timestamp a command at the Clicker~4 (or coordinator) and the corresponding action/acknowledgment at the target node using a shared timing reference; $\geq$50 trials, report median and 95th-percentile, not just a single sample. \\
+Jitter & Standard deviation of the same trial set's latency distribution. \\
+Packet loss & Sequence-numbered test frames sent at a known rate over a fixed window; count gaps at the receiver. \\
+Bus utilization / sustained clean frame rate & Fraction of available transmit opportunities used at real demo traffic rate; separately, increase rate until drops/errors appear and report the last clean rate. \\
+Startup / cold-start time & Time from node power-on to first successful PLCA beacon sync, measured at the coordinator. \\
+Disconnect detection / reconnect time & Physically unplug a follower; measure time-to-declared-offline (if implemented) and time-to-resynchronized-communication on replug. \\
+Power-cycle recovery & Time from power restoration to normal operation, no manual intervention. \\
+Termination sensitivity & Repeat link-quality measurements with termination jumpers in each valid/invalid configuration; record pass/fail and any degradation. \\
+Cable/topology sensitivity & Repeat with at least one alternate cable run/length available on the bench; record any change in error rate or link quality. \\
+Error recovery & Induce a bus fault (brief short, termination removal) and measure recovery time to normal operation without a power cycle. \\
+Node power consumption (idle/active) & Current-sense test points (Sections~\ref{sec:rev-a-control}, \ref{sec:rev-a-light}, \ref{sec:rev-b-gateway}), measured at both 12\,V and 24\,V input where bench supplies allow. \\
+Maximum node count actually tested & The highest count at which the above metrics were actually measured -- never the datasheet's theoretical maximum. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Gateway operation metrics}
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}p{3.4cm} X@{}}
+\toprule
+\textbf{Metric} & \textbf{Procedure} \\
+\midrule
+CAN $\rightarrow$ Gateway $\rightarrow$ T1S $\rightarrow$ Clicker latency (per leg and total) & Timestamp at each hop using a reference CAN analyzer on the bench segment plus the shared timing reference used for T1S metrics; total round-trip is measured as one interval (command issued to confirmation received), not the sum of legs, to catch non-additive delay. \\
+Maximum sustained message rate / dropped messages & Increase CAN test-frame rate until drops/errors appear at the Clicker; report the last clean rate; sequence-numbered frames confirm exact drop count. \\
+Timestamp accuracy & Compare Gateway-assigned timestamps against the reference CAN analyzer's independent timestamp for the same frames. \\
+CAN error behavior / bus-off recovery & Deliberately induce a bus-off condition (forced error frames) and measure detection and recovery time. \\
+Passive-mode zero-TX verification & With Mode~2 disabled, confirm via the reference CAN analyzer that the Gateway never asserts TX on the legacy bus across the full test session -- checked actively, not assumed from absence of observed problems. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Power metrics}
+
+Idle current, active current, startup/inrush current, and supply-rail stability (voltage sag under load transient) for each node class (E2B-Control, E2B-Lighting, Gateway), using the current-sense test points specified for each board, at both 12\,V and 24\,V input where bench supplies allow.

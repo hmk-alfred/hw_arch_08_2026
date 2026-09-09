@@ -1,0 +1,21 @@
+\section{Rev A-Control --- LAN8660 Development Board}
+\label{sec:rev-a-control}
+
+Rev~A changes from the prior plan: it does \emph{not} redevelop LAN8651 host-side hardware (commercial click boards already do that job, Section~\ref{sec:cots-bench}). Rev~A focuses entirely on the new, uncertain devices -- LAN8660 here, LAN8661 in Section~\ref{sec:rev-a-light} -- as a pair of tightly related development boards.
+
+\subsection{What Rev A-Control exposes}
+
+\begin{itemize}[itemsep=0.1em]
+\item LAN8660.
+\item 10BASE-T1S pair, with coupling/termination matching the reference pattern used on Rev~0 COTS hardware (Section~\ref{sec:cots-bench}).
+\item All useful configuration pins (strapping/mode pins as documented once secure access arrives).
+\item Accessible local peripheral interfaces: I$^2$C, SPI, UART, and any digital I/O the datasheet confirms as supported.
+\item Test outputs and test inputs sufficient to independently drive/observe the peripheral interface without the actual actuator attached, for isolating LAN8660-side issues from driver-IC-side issues.
+\item Current measurement and voltage measurement test points.
+\item Status indicators (link, PLCA activity, fault).
+\item A convenient expansion connector to experiment with the motor-driver/actuator interface (Section~\ref{sec:lan8660-validation}) -- the exact actuator circuit remains open until documentation review, so this connector is deliberately generic (breaks out I$^2$C/SPI/UART plus a protected power rail) rather than committed to one driver IC's exact footprint.
+\end{itemize}
+
+\subsection{Shared with Rev A-Light}
+
+Power input/regulation, T1S connector and termination approach, monitoring circuit, test-point layout convention, board size, mounting, status-indicator style, and manufacturing/assembly approach are held common between Rev~A-Control and Rev~A-Light (Section~\ref{sec:platform-strategy}); only the local peripheral-interface circuitry differs, because that is where the two parts' actual jobs diverge.

@@ -1,0 +1,102 @@
+\section{Architecture A --- Clean-Sheet / Greenfield}
+\label{sec:arch-a}
+
+For a customer designing a new machine and willing to adopt Alfred's preferred electrical infrastructure. Central-compute selection is out of scope; the Clicker~4 (STM32F745) stands in as the temporary central node for the entire program.
+
+\begin{diagram}
+                        Clicker 4
+                        STM32F745
+                            |
+                           SPI
+                            |
+                         LAN8651
+                            |
+                   =================
+                      10BASE-T1S
+                   =================
+                      |         |
+                      |         |
+                      v         v
+
+                  LAN8660    LAN8661
+                  CONTROL    LIGHTING
+                     E2B        E2B
+                      |         |
+               motor driver   LED driver
+                      |         |
+                  actuator     LEDs
+\end{diagram}
+
+Preferred expansion for the final validation network, schedule permitting:
+
+\begin{diagram}
+                        Clicker 4
+                            |
+                         LAN8651
+                            |
+                ========= T1S =========
+                   |        |        |
+                   v        v        v
+
+                LAN8660  LAN8660  LAN8661
+                   |        |        |
+                control   second    lighting
+                endpoint  control
+                          endpoint
+\end{diagram}
+
+Only \textbf{one} LAN8660 is mandatory if schedule pressure exists; the second is a demonstration-quality stretch goal, not a validation requirement.
+
+\subsection{What E2B means here}
+
+\textbf{E2B = Ethernet-to-peripheral bridge.} It is deliberately \emph{not} a zonal computer, an application ECU, a large general-purpose MCU node, or a vehicle-behavior controller -- its entire job is bridging Ethernet/T1S to a physical peripheral interface, with the LAN8660/LAN8661 silicon itself carrying zero Alfred-authored logic.
+
+\begin{diagram}
+LAN8660 path:                          LAN8661 path:
+
+Alfred command                         Alfred lighting command
+     |                                      |
+10BASE-T1S                             10BASE-T1S
+     |                                      |
+  LAN8660                                LAN8661
+     |                                      |
+peripheral interface                  lighting driver
+     |                                      |
+motor driver / actuator               physical LEDs
+\end{diagram}
+
+The point of the Greenfield program is to determine, on real hardware, whether these devices provide a sufficiently simple endpoint architecture to make Alfred's ``dummy edge'' model practical -- not to assume it and build around the assumption.
+
+\subsection{Greenfield mandatory November proof}
+\label{sec:arch-a-proof}
+
+\begin{diagram}
+                    Clicker 4
+                        |
+                     LAN8651
+                        |
+                10BASE-T1S
+                 /        \
+                /          \
+               v            v
+
+           LAN8660       LAN8661
+               |            |
+         motor/actuator    lighting
+\end{diagram}
+
+\begin{itemize}[itemsep=0.1em, label={$\square$}]
+\item Clicker~4 participates on T1S through LAN8651.
+\item LAN8660 participates on the same multidrop T1S network.
+\item LAN8661 participates on the same multidrop T1S network.
+\item LAN8660 receives a network command.
+\item LAN8660 causes a real motor-driver/actuator action.
+\item At least one useful state/telemetry path associated with the LAN8660 demonstration is observable.
+\item LAN8661 receives a network lighting command.
+\item LAN8661 controls a real LED/lighting load.
+\item LAN8660 and LAN8661 operate simultaneously.
+\item PLCA behavior is characterized.
+\item Node reset/reconnection works.
+\item Power-cycle recovery works.
+\item Network performance is quantitatively measured (Section~\ref{sec:measurement}).
+\end{itemize}

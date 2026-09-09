@@ -1,0 +1,59 @@
+\section{10BASE-T1S / PLCA Validation Plan}
+\label{sec:t1s-plca}
+
+T1S validation is a first-class deliverable. ``Packets were successfully transmitted'' is not sufficient validation anywhere in this program -- the network itself must be characterized, not just exercised.
+
+\subsection{What must be characterized}
+
+\begin{enumerate}[itemsep=0.05em]
+\item Physical link bring-up
+\item PLCA operation
+\item PLCA coordinator behavior
+\item Node-ID configuration
+\item Transmit opportunities
+\item End-to-end latency
+\item Node-to-node latency
+\item Jitter
+\item Packet loss
+\item Bus utilization
+\item Maximum sustained clean traffic rate
+\item Cold-start time
+\item Node disconnect behavior
+\item Node reconnect time
+\item Power-cycle recovery
+\item Termination sensitivity
+\item Cable/topology sensitivity
+\item Error recovery
+\item Node power consumption
+\item Maximum node count actually tested
+\end{enumerate}
+
+If practical, additionally characterize gPTP/time synchronization and endpoint synchronization accuracy -- LAN8660/LAN8661 support optional gPTP per Microchip's public documentation (Section~\ref{sec:hardware-roles}), so this is a plausible stretch measurement, not a required one.
+
+\begin{decision}[title={Datasheet numbers are not measured results}]
+Every item above is reported from an actual bench measurement on Alfred's own network, with the procedure and equipment stated (Section~\ref{sec:measurement}). A datasheet's typical/maximum figure is a design input, never a substitute for a result.
+\end{decision}
+
+\subsection{PLCA-specific proof}
+
+Use an oscilloscope or network capture to prove actual PLCA operation, not just infer it from successful application-level traffic:
+
+\begin{diagram}
+    coordinator beacon
+        |
+    node transmit opportunity 1
+        |
+    node transmit opportunity 2
+        |
+    node transmit opportunity 3
+\end{diagram}
+
+Test progression, each stage building on the last:
+
+\begin{itemize}[itemsep=0.1em]
+\item Two-node T1S (minimum viable PLCA proof).
+\item Three-node T1S.
+\item Clicker/LAN8651, LAN8660, and LAN8661 together on the \emph{same} segment -- this is the configuration the mandatory Greenfield proof (Section~\ref{sec:arch-a-proof}) actually requires, and it is validated at the network-characterization level here, not assumed from the two/three-generic-node results above.
+\end{itemize}
+
+The mandatory November Greenfield network must demonstrate PLCA with both LAN8660 and LAN8661 active simultaneously -- a passing two-node COTS-only PLCA test (Section~\ref{sec:cots-bench}) establishes that the network layer works in general; it does not by itself establish that LAN8660/LAN8661 behave correctly as PLCA followers, which is a separate, required test.

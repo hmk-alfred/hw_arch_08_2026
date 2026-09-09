@@ -1,0 +1,17 @@
+\section{Rev B-Control --- E2B-Control Node}
+\label{sec:rev-b-control}
+
+LAN8660-based E2B-Control node, built up from Rev~A-Control's validated circuit (Section~\ref{sec:rev-a-control}) with prototype-grade robustness added.
+
+\begin{itemize}[itemsep=0.1em]
+\item Sensible 12/24\,V input.
+\item Reverse-polarity protection.
+\item Overcurrent protection.
+\item TVS/transient suppression.
+\item Better connectors than Rev~A's bench-expedient headers/terminals.
+\item Current/voltage monitoring.
+\item The real motor-driver/actuator interface selected in Section~\ref{sec:lan8660-validation}, no longer a generic breakout.
+\item Test access sufficient to re-run the full Rev~A validation procedure on Rev~B hardware for direct comparison (Section~\ref{sec:measurement}).
+\end{itemize}
+
+Rev~B-Control does not introduce an MCU or any circuit not already validated on Rev~A (Section~\ref{sec:platform-strategy}) -- it is Rev~A's proven circuit made robust, not a new architecture.

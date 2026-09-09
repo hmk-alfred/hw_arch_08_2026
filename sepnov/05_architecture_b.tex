@@ -1,0 +1,115 @@
+\section{Architecture B --- Existing Vehicle / Brownfield}
+\label{sec:arch-b}
+
+For a customer with an established CAN/CAN-FD/LIN/ECU architecture who does not want to redesign the vehicle solely to adopt Alfred. The existing network remains present and continues operating; Alfred attaches to it.
+
+\begin{diagram}
+                   EXISTING VEHICLE
+
+           ECU -------- CAN -------- ECU
+                        |
+                        |
+                   Alfred Gateway
+                        |
+                  Gateway MCU
+                        |
+                     LAN8651
+                        |
+                   10BASE-T1S
+                        |
+                     Clicker 4
+\end{diagram}
+
+\subsection{The Alfred pseudo-bus}
+
+Alfred does not replace the existing bus. It creates a parallel, Alfred-facing representation of it:
+
+\begin{diagram}
+    LEGACY TRAFFIC
+         |
+       CAPTURE
+         |
+      TIMESTAMP
+         |
+      NORMALIZE
+         |
+       MIRROR
+         |
+    10BASE-T1S
+         |
+    ALFRED VIEW
+\end{diagram}
+
+Six functions, kept explicitly distinct:
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}p{2.6cm} X@{}}
+\toprule
+\textbf{Function} & \textbf{Definition} \\
+\midrule
+Capture & Observe a frame -- read-only at the transceiver level; the only function active in Mode~1 (Section~\ref{sec:gateway-modes}). \\
+Timestamp & Associate time information with the captured frame. \\
+Normalize & Convert the legacy representation into Alfred's internal representation. \\
+Mirror & Publish that representation over T1S. \\
+Replay & Reproduce recorded traffic during authorized bench tests, not live vehicle operation. \\
+Active translation & Receive a permitted T1S command and transmit the corresponding legacy-bus command -- the only function that ever puts a new frame on the legacy bus, gated by Mode~2. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Passive and authorized-bidirectional modes}
+\label{sec:gateway-modes}
+
+\begin{diagram}
+MODE 1 -- PASSIVE (default at power-up)
+    Vehicle ----------> Alfred
+    Vehicle <-----X---- Alfred      (TX physically disabled where practical)
+
+MODE 2 -- AUTHORIZED BIDIRECTIONAL
+    Vehicle <---------> Alfred
+\end{diagram}
+
+Gateway hardware includes: CAN/CAN-FD transceiver, optional LIN transceiver, Gateway MCU, LAN8651, hardware TX gating (safe default = TX disabled), watchdog, deterministic reset, bus-off/error handling, command timeout, operating-mode indication, current/voltage measurement, and debug/programming access. This capability is used only on Alfred-owned systems, test benches, customer development systems, or explicitly authorized vehicles -- bypassing OEM security mechanisms is out of scope categorically.
+
+\subsection{Brownfield November proof}
+
+\begin{diagram}
+        Device A ----- CAN ----- Device B
+                          |
+                     Alfred Gateway
+                          |
+                       LAN8651
+                          |
+                     10BASE-T1S
+                          |
+                       Clicker 4
+
+PHASE 1 -- PASSIVE
+  physical event -> legacy CAN traffic -> Gateway capture ->
+  timestamp / normalize -> T1S mirror -> Clicker receives event
+
+PHASE 2 -- AUTHORIZED BIDIRECTIONAL
+  Clicker -> T1S command -> Gateway -> CAN command -> legacy device ->
+  physical response -> Gateway capture -> mirrored confirmation -> Clicker
+\end{diagram}
+
+A controlled bench CAN network (two devices) is purpose-built for this demonstration -- the goal is validated Gateway behavior, not sourcing a real harness.
+
+\begin{itemize}[itemsep=0.1em, label={$\square$}]
+\item Existing CAN bus continues operating normally.
+\item Gateway passive mode verified.
+\item Gateway produces zero legacy-bus TX while passive -- verified independently (not just by absence of observed problems).
+\item Frames captured.
+\item Frames timestamped.
+\item Frames mirrored onto T1S.
+\item Clicker receives mirrored traffic.
+\item Authorized mode explicitly enabled (never default).
+\item Clicker command reaches legacy device.
+\item Physical response occurs.
+\item Response mirrored back.
+\item Total round-trip latency measured.
+\item CAN-FD validated if available.
+\end{itemize}
+
+LIN remains schedule-conditional (Section~\ref{sec:feature-cuts}) -- included on Rev~B-Gateway hardware at negligible incremental cost, demonstrated only if CAN/CAN-FD/T1S validation is on schedule.

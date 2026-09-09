@@ -67,3 +67,51 @@ LAN8651 pin-compatibility against the actual datasheet pinout tables before
 finalizing the dual-footprint Rev A layout — the recommendation so far is
 sourced from product-brief-level material, not a full pin-by-pin datasheet
 diff.
+
+## 2026-09-09 — Revision 2 of sepnov_plan.tex: LAN8660/LAN8661 now mandatory
+
+Following a discussion about whether LAN8660/LAN8661 could be shared across
+the Greenfield/Brownfield architectures (conclusion: no — RCP isn't a
+general transport, and their I2C/SPI/UART pins face peripherals, not a host
+controller), the user revised the Sept–Nov plan's hardware architecture.
+LAN8660 (Control Endpoint) and LAN8661 (Lighting Endpoint) are now
+**mandatory, first-class Greenfield E2B devices** — not the secondary/
+time-boxed investigation Revision 1 treated them as. LAN8651 stays the
+host-side MAC-PHY behind a programmable MCU only (Clicker 4, Gateway MCU).
+The "one MCU+LAN8651 PCB becomes either E2B or Gateway" premise is retired;
+the new architecture is three "platform sibling" node classes (E2B-Control/
+LAN8660, E2B-Lighting/LAN8661, Gateway/MCU+LAN8651) sharing power/
+protection/connector/mechanical/validation philosophy, not schematics.
+
+All 15 files under `sepnov/` from 2026-09-08 were replaced with 23 new
+files matching the user's new 22-part structure + final questions.
+`main.tex` untouched.
+
+Did more targeted research before writing: confirmed via Microchip's public
+VelocityDRIVE sell sheet (DS00006257C) that LAN8660/8661 expose I2C/SPI/UART
+digital I/O on the peripheral side, but found no pin-exact datasheet,
+register map, or reference schematic is publicly available — that's gated
+behind Microchip's secure/NDA documentation program. Called this out
+explicitly and repeatedly as the program's highest-leverage, least-
+controllable dependency, with an honest fallback if it's late. Also flagged
+as an open risk: couldn't confirm public docs explicitly state PLCA support
+for the LAN866x endpoint family the way they do for LAN8650/1 and
+LAN8670/1/2 — resolved empirically by a three-node PLCA test, not assumed.
+
+Proposed (with "confirm once real docs arrive" caveats): DRV8830-class I2C
+motor driver (primary) or PCA9685-class I2C PWM/servo driver (alternate)
+for the LAN8660 actuator experiment; PCA9955B-class automotive I2C LED
+driver (primary) or TLC59116-class general I2C LED driver (alternate) for
+LAN8661 — explicitly not WS2812/WS2814 absent confirmation LAN8661 supports
+that single-wire protocol.
+
+PCB structure changed from 3 boards to 5 (Rev A-Control/A-Light, then
+Rev B-Control/B-Light/B-Gateway → Rev C family) — flagged as its own risk,
+traded deliberately against forcing incompatible silicon onto one board.
+Built clean: 37 pages, zero undefined references, zero overfull warnings.
+Architecture A holds at 3 pages, Architecture B at 2 (under the ~3-page cap).
+
+**Next session TODO:** once Microchip secure docs/eval hardware for
+LAN8660/LAN8661 actually arrive, revisit the candidate driver-IC choices
+(Sections 8/9 of the plan) against the real reference design before
+schematic freeze — they're reasoned proposals from public-level info only.

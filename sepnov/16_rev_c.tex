@@ -1,0 +1,35 @@
+\section{Rev C --- Industrial Demonstration Family}
+\label{sec:rev-c}
+
+Rev~C contains only circuits that already worked in Rev~B. No architectural experimentation happens on Rev~C.
+
+\begin{diagram}
+                    ALFRED REV C
+
+            +------------+------------+
+            |            |            |
+            v            v            v
+
+      E2B-Control   E2B-Light      Gateway
+
+        LAN8660      LAN8661     MCU+LAN8651
+\end{diagram}
+
+Made visually and electrically recognizable as one product family (Section~\ref{sec:platform-strategy}). Improvements over Rev~B:
+
+\begin{itemize}[itemsep=0.1em]
+\item Locking connectors (power and T1S).
+\item Mechanical mounting suited to a demo fixture/enclosure.
+\item PCB outline consistency across the three boards.
+\item Enclosure compatibility.
+\item Labeling.
+\item Cable management.
+\item ESD/transient protection, re-verified after connector changes.
+\item BOM quality (replace any bench-expedient part with the intended representative part).
+\item Assembly/test procedure, documented and repeatable.
+\item Configuration simplicity.
+\end{itemize}
+
+\begin{decision}[title={What Rev C is not}]
+Rev~C does not claim automotive production qualification of any kind. It is customer-demo-quality engineering hardware -- credible enough for a serious customer conversation, not a production part number. If Rev~C threatens the November~30 deadline, the program demonstrates on validated Rev~B hardware instead (Section~\ref{sec:feature-cuts}); architecture validation is never sacrificed to produce prettier PCBs.
+\end{decision}

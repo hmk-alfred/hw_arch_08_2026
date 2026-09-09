@@ -1,25 +1,35 @@
 \section{Executive Summary}
 \label{sec:exec-summary}
 
-Alfred has two customer electrical-architecture entry points. They are not competing strategies -- they are different architectures for customers starting from different places.
+This program proves two customer adoption architectures by November~30, 2026, on one common 10BASE-T1S electrical infrastructure. They are not competing product strategies -- they are two ways a customer enters the same Alfred network.
 
 \begin{diagram}
-ARCHITECTURE 1 -- CLEAN-SHEET
-   Clean-sheet customer -> Alfred-native 10BASE-T1S architecture ->
-   common Alfred node configured as E2B -> peripherals
+                        ALFRED
 
-ARCHITECTURE 2 -- EXISTING VEHICLE
-   Existing vehicle customer -> customer retains existing E/E infrastructure ->
-   common Alfred node configured as Gateway -> CAN/CAN-FD/LIN traffic
-   represented through Alfred -> 10BASE-T1S pseudo-bus
+                    10BASE-T1S
+                         |
+             +-----------+-----------+
+             |                       |
+             v                       v
+
+      CLEAN-SHEET                 BROWNFIELD
+      NEW PROGRAM              EXISTING PROGRAM
+             |                       |
+       direct E2B                 Gateway
+       endpoints                    |
+             |                 CAN/CAN-FD/LIN
+             v                       |
+       peripherals               existing ECUs
 \end{diagram}
 
-The commercial and technical wedge for both is \textbf{10BASE-T1S}. For a clean-sheet program it offers an Ethernet-oriented peripheral network with simplified translation nodes (Section~\ref{sec:arch-a}). For an existing-vehicle program it creates an Alfred-facing network onto which existing CAN/CAN-FD/LIN traffic can be represented without forcing the customer to rebuild their E/E architecture (Section~\ref{sec:arch-b}).
+\textbf{Architecture~A (Greenfield):} a clean-sheet customer adopts Alfred's Ethernet-native infrastructure directly. Peripherals connect through \textbf{LAN8660} (Control Endpoint) and \textbf{LAN8661} (Lighting Endpoint) -- Microchip's MCU-less, RCP-managed 10BASE-T1S endpoint devices -- with no Alfred-authored firmware running at the edge node at all.
 
-The September--November objective is narrow and specific: \textbf{prove that both architectures are supported by the same Alfred hardware family.} Concretely, that means one common interface-node platform (Section~\ref{sec:common-platform}) that is populated or configured differently for the E2B role versus the Gateway role -- not two unrelated boards that happen to share a name.
+\textbf{Architecture~B (Brownfield):} an existing-vehicle customer keeps their CAN/CAN-FD/LIN network exactly as it is. An Alfred Gateway (a customer MCU running Alfred's own capture/timestamp/mirror/translate logic, placed onto 10BASE-T1S via \textbf{LAN8651}) attaches to that network and represents it on an Alfred-facing pseudo-bus.
 
-\textbf{Central compute is explicitly out of scope for this program.} A MikroE Clicker~4 (STM32F745) stands in for Alfred's eventual central compute for the entire September--November window; nothing in this plan depends on, or should influence, Alfred's future central-compute silicon decision.
+\begin{decision}[title={This revision corrects a hardware-role error from the prior plan (2026-09-08)}]
+The previous revision of this plan treated LAN8660/LAN8661 as a secondary, time-boxed investigation and proposed a single MCU+LAN8651 board that would become either an E2B or a Gateway by component population. Both positions are superseded. LAN8660 and LAN8661 are \textbf{mandatory} for the November Greenfield proof -- they are Alfred's actual Control and Lighting E2B endpoints, not a stretch goal. And because LAN8660/LAN8661 are MCU-less fixed-function devices while the Gateway role structurally requires a programmable MCU, \textbf{one identical PCB cannot become both an E2B and a Gateway.} The corrected architecture is one shared \emph{electrical platform philosophy} (Section~\ref{sec:platform-strategy}) realized as three sibling node classes -- E2B-Control (LAN8660), E2B-Lighting (LAN8661), and Gateway (MCU~+~LAN8651) -- sharing power, protection, connectors, mechanical language, and validation discipline, not silicon.
+\end{decision}
 
-\textbf{An important correction surfaced during this planning pass:} the user-specified LAN8660/LAN8661 parts are Microchip's \emph{VelocityDRIVE endpoint} family -- fixed-function, MCU-less 10BASE-T1S devices configured over the network via a vendor GUI tool (MPLAB Network Creator), not general-purpose PHY/MAC-PHY silicon meant to sit behind a customer MCU. They cannot host Alfred's own firmware, cannot speak CAN/CAN-FD/LIN, and therefore cannot serve as the network component of a Gateway. Section~\ref{sec:lan866x} documents this finding against primary Microchip sources and identifies the part that actually matches the common-node architecture in the user's own block diagrams: the \textbf{LAN8650/LAN8651 MAC-PHY family} (SPI, OPEN Alliance TC6, host-MCU-driven). The plan below uses LAN8650/LAN8651 as the common node's primary network component and keeps LAN8660/LAN8661 in scope as a secondary, explicitly time-boxed investigation into an MCU-less lightweight E2B variant -- exactly the kind of correction this program exists to catch in September rather than in a Rev~B post-mortem.
+\textbf{LAN8651} is the host-side MAC-PHY used wherever a programmable MCU needs 10BASE-T1S access: the Clicker~4 (temporary central-compute stand-in, out of scope for redesign) and the Brownfield Gateway MCU both reach the network through it. Commercial LAN8651 hardware (MikroE Two-Wire ETH Click) already does this job well -- the program does not spend its first PCB revision reproducing it.
 
-By November 30 both architectures must be demonstrated on hardware derived from one common node: a clean-sheet multidrop 10BASE-T1S network of Alfred nodes in E2B mode carrying real sensor and actuator traffic to/from a Clicker~4, and a brownfield CAN network with an Alfred Gateway node passively mirroring traffic onto a 10BASE-T1S pseudo-bus and, in an explicitly authorized bidirectional mode, carrying a validated command from the Clicker~4 through to a physical device and back. Section~\ref{sec:exit-gate} is the exact, checkable pass/fail criteria for both.
+The November~30 exit gate (Section~\ref{sec:exit-criteria}) requires, on real hardware, with measured data: a Clicker~4 and at least one LAN8660 and one LAN8661 coexisting on a multidrop PLCA segment, LAN8660 driving a real motor-driver/actuator path with observable telemetry, LAN8661 driving a real lighting load, both simultaneously, and, separately, a Gateway passively mirroring a live CAN network onto the same T1S infrastructure and then, in an explicitly authorized mode, carrying a command from the Clicker~4 through to a physical device and back -- all against the quantitative validation discipline in Section~\ref{sec:measurement}, never against a qualitative ``it worked.''

@@ -1,0 +1,35 @@
+\section{LAN8661 Validation Plan}
+\label{sec:lan8661-validation}
+
+\subsection{Candidate LED-driver architecture}
+
+Per the same discipline as Section~\ref{sec:lan8660-validation}, the exact LED-driver IC is chosen after reviewing Microchip's LAN8661 reference material, not assumed in advance. Two candidates, both serial-controlled constant-current LED drivers matching the ``simple SPI- or I$^2$C-controlled constant-current LED-driver'' guidance:
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}p{3.2cm} X@{}}
+\toprule
+\textbf{Candidate} & \textbf{Why it is low-risk} \\
+\midrule
+I$^2$C automotive-grade constant-current LED driver (e.g., NXP PCA9955B-class: I$^2$C, per-channel constant current, LED open/short diagnostics) & Automotive-grade part explicitly in the same application space Microchip's own LAN866x material cites (``automotive exterior and interior lighting''); per-channel fault diagnostics give a telemetry story symmetric with the LAN8660 motor-driver fault readback. \textbf{Primary candidate.} \\
+I$^2$C general-purpose constant-current LED driver (e.g., TI TLC59116-class: I$^2$C, 16-channel PWM dimming) & Widely available, hobbyist-accessible breakout boards, well documented -- useful as a bench fallback if automotive-grade parts are on longer lead time than the schedule allows. \textbf{Alternate candidate.} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{decision}[title={WS2812/WS2814 is explicitly not the default}]
+WS2812/WS2814-class addressable LEDs use a single-wire, tightly-timed proprietary protocol, not a register-based I$^2$C/SPI/UART interface -- they are used here only if Microchip's actual LAN8661 reference architecture is confirmed to natively support that specific signaling path. Absent that confirmation, they are not a candidate, since forcing timing-critical bit-banged signaling through a peripheral interface designed around register-based serial buses is exactly the kind of unverified assumption this program exists to avoid.
+\end{decision}
+
+\subsection{Validation steps}
+
+\begin{enumerate}[itemsep=0.1em]
+\item Confirm RCP/MPLAB Network Creator lighting-endpoint configuration workflow on evaluation hardware or Rev~A.
+\item Confirm the peripheral-side serial interface is electrically live and addressable against the chosen LED-driver IC.
+\item Issue a network lighting command from the Clicker~4 and confirm the driver IC receives the corresponding command on its local bus (logic analyzer verification, not visual inspection alone).
+\item Confirm the physical LED load responds correctly (on/off at minimum; brightness/dimming as a stretch goal if the chosen driver and RCP profile support it).
+\item Repeat with a different command value to rule out a latched/stuck path.
+\item Run alongside LAN8660 on the same segment (Section~\ref{sec:arch-a-proof}) and confirm no interference, including checking that PLCA transmit-opportunity timing is not disturbed by whichever node is actively driving its load.
+\end{enumerate}
+
+Blockers are classified the same way as Section~\ref{sec:lan8660-validation} against the October~10 gate (Section~\ref{sec:timeline}).

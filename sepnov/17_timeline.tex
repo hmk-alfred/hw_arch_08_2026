@@ -1,0 +1,84 @@
+\section{September--November Timeline}
+\label{sec:timeline}
+
+Current date: September~9, 2026. Final deadline: November~30, 2026. The cadence of the prior plan is preserved; the deliverables are revised for the corrected LAN8660/LAN8661/LAN8651 role assignment (Section~\ref{sec:hardware-roles}). Owners are functional disciplines: PM (program management), Procurement, HW-Endpoint (LAN8660/LAN8661 hardware and RCP/MPLAB Network Creator work), HW-Gateway (CAN/CAN-FD/LIN/Gateway MCU hardware), Layout, Test (bring-up/validation), Firmware (Gateway embedded firmware only -- E2B endpoints carry none).
+
+\begin{landscape}
+\begin{center}
+\footnotesize
+\begin{longtable}{@{}p{4.0cm} p{1.9cm} p{2.6cm} p{1.4cm} p{1.5cm} p{4.3cm} p{4.3cm}@{}}
+\toprule
+\textbf{Task} & \textbf{Owner} & \textbf{Dependency} & \textbf{Start} & \textbf{Target} & \textbf{Validation Method} & \textbf{Pass Condition} \\
+\midrule
+\endhead
+\multicolumn{7}{@{}l}{\textbf{September 8--14 (Week 1) --- Reference network + Microchip access}} \\
+\midrule
+Procure LAN8651 Two-Wire ETH Click boards ($\geq$3), EVB-LAN8670-USB, Clicker hardware, CAN bench hardware & Procurement & None & Sep 8 & Sep 10 & Visual inspection against packing list & All boards received and verified \\
+Procure LAN8660/LAN8661 samples/EVBs if available & Procurement & None & Sep 8 & Sep 10 & Distributor/Microchip Direct check & Ordered if available; otherwise logged as unavailable \\
+Request LAN8660/LAN8661 secure documentation, RCP docs, MPLAB Network Creator, reference schematics/BOMs, errata, samples, FAE support & PM & None & Sep 8 & Sep 9 & Confirmation of request submitted & Request acknowledged by Microchip \\
+Establish PC $\leftrightarrow$ T1S (EVB-LAN8670-USB) & Test & Eval hardware received & Sep 10 & Sep 11 & Link/PLCA observation on PC tool & Link established \\
+Establish Clicker $\leftrightarrow$ LAN8651 $\leftrightarrow$ T1S & HW-Endpoint & Click boards received & Sep 10 & Sep 12 & SPI link + frame exchange & Clicker transmits/receives on T1S \\
+Prove 2-node PLCA, then 3-node PLCA & Test & Clicker-T1S link established & Sep 12 & Sep 14 & Scope capture of transmit opportunities & Timing matches configured node IDs \\
+Record first baseline measurements & Test & 3-node PLCA proven & Sep 14 & Sep 14 & Section~\ref{sec:measurement} procedures & Baseline dataset recorded \\
+\midrule
+\multicolumn{7}{@{}l}{\textbf{September 15--21 (Week 2) --- LAN866x proof + Rev A schematic}} \\
+\midrule
+Bring up LAN8660/LAN8661 on evaluation hardware, if available & HW-Endpoint & Eval hardware + Microchip access & Sep 15 & Sep 18 & RCP/MPLAB Network Creator workflow & Endpoint configurable and network-visible \\
+If no eval hardware: design custom Rev A from reference/secure documentation & HW-Endpoint & Microchip documentation access & Sep 15 & Sep 19 & Design review & Schematic proceeds on best available information \\
+Validate RCP/configuration workflow, LAN8660 I/O, LAN8661 lighting interface & HW-Endpoint & Eval hardware bring-up & Sep 16 & Sep 19 & Section~\ref{sec:lan8660-validation}/\ref{sec:lan8661-validation} steps 1--2 & Peripheral interface confirmed live \\
+Select provisional LAN8660 actuator path and LAN8661 LED-driver path & HW-Endpoint, PM & Validation above & Sep 18 & Sep 19 & Design review against Sections~\ref{sec:lan8660-validation}/\ref{sec:lan8661-validation} & Candidate selected with documented rationale \\
+Finish Rev A-Control schematic & HW-Endpoint, Layout & Actuator path selected & Sep 19 & Sep 21 & Self-review checklist & Schematic capture complete \\
+Finish Rev A-Light schematic & HW-Endpoint, Layout & LED-driver path selected & Sep 19 & Sep 21 & Self-review checklist & Schematic capture complete \\
+\midrule
+\multicolumn{7}{@{}l}{\textbf{September 22--30 (Week 3) --- Rev A layout and fabrication}} \\
+\midrule
+Layout Rev A-Control and Rev A-Light & Layout & Schematics complete & Sep 22 & Sep 26 & DRC, T1S impedance check & Clean DRC; controlled-impedance T1S pair verified on both \\
+T1S layout review, power review, footprint review & HW-Endpoint, Layout & Layout draft & Sep 26 & Sep 27 & Peer review meeting & No open issues \\
+BOM review & Procurement, PM & Layout review passed & Sep 27 & Sep 28 & BOM audit & All parts sourceable within lead time \\
+Test-point review & Test, HW-Endpoint & Layout review passed & Sep 27 & Sep 28 & Checklist against Sections~\ref{sec:rev-a-control}/\ref{sec:rev-a-light} & All required test points present \\
+Order Rev A-Control and Rev A-Light fabrication & Procurement & Reviews complete & Sep 29 & Sep 30 & PO confirmation & Both orders placed \\
+\midrule
+\multicolumn{7}{@{}l}{\textbf{October 1--10 --- Rev A bring-up (HARD ARCHITECTURE GATE Oct 10)}} \\
+\midrule
+Assemble Rev A-Control and Rev A-Light & HW-Endpoint, Test & Boards arrive & Oct 3 & Oct 5 & Visual/continuity check & No shorts; correct rail voltages \\
+Validate power, T1S connectivity, configuration on both boards & Test & Assembly complete & Oct 5 & Oct 7 & Rail measurement, link/RCP config & Rails in spec; endpoints configurable \\
+Validate PLCA with Clicker + Rev A-Control + Rev A-Light together & Test & Individual bring-up passed & Oct 7 & Oct 8 & Section~\ref{sec:t1s-plca} three-node test & PLCA characterized with both endpoints active \\
+Validate control endpoint (LAN8660 actuator path) and lighting endpoint (LAN8661) & Test & PLCA validated & Oct 8 & Oct 9 & Sections~\ref{sec:lan8660-validation}/\ref{sec:lan8661-validation} full step list & Both endpoints perform real physical I/O \\
+Validate simultaneous operation, reconnect, power-cycle; capture measurements & Test & Individual validation passed & Oct 9 & Oct 10 & Section~\ref{sec:measurement} procedures & Rev A pass gate (Section~\ref{sec:rev-a-light}) fully met \\
+\textbf{October 10 architecture gate review} & PM & All Rev A validation & Oct 10 & Oct 10 & Gate checklist vs.\ Section~\ref{sec:rev-a-light} & Both parts show meaningful physical functionality, or blocker classified (documentation/tool/config/PCB/network/interface/silicon) \\
+\midrule
+\multicolumn{7}{@{}l}{\textbf{October 11--20 --- Rev B architecture/schematic}} \\
+\midrule
+Design Rev B-Control, Rev B-Light schematics from Rev A measurements & HW-Endpoint & October 10 gate passed & Oct 11 & Oct 15 & Design review & Signed off, no unresolved Rev A issues carried forward \\
+Design Rev B-Gateway schematic; CAN/CAN-FD bring-up in parallel on dev hardware & HW-Gateway, Firmware & MCU selection retained (Section~\ref{sec:rev-b-gateway}) & Oct 11 & Oct 17 & FDCAN driver bring-up on Nucleo & FDCAN link functional on bench \\
+Freeze power architecture, T1S connectors, CAN interface, TX gating, actuator/lighting-driver interfaces, measurement circuits & PM, HW-Endpoint, HW-Gateway & Both schematics drafted & Oct 18 & Oct 20 & Full design review & No open issues across all three boards \\
+\midrule
+\multicolumn{7}{@{}l}{\textbf{October 21--31 --- Rev B layout/fab}} \\
+\midrule
+Layout Rev B-Control, Rev B-Light, Rev B-Gateway & Layout & Design freeze & Oct 21 & Oct 28 & DRC, impedance check & Clean DRC on all three boards \\
+Order Rev B (enough units for $\geq$1 LAN8660 node, $\geq$1 LAN8661 node, 1 Gateway, plus spares) & Procurement & Layout review, BOM & Oct 29 & Oct 31 & PO confirmation & Orders placed with spare-unit allowance \\
+Continue Rev A characterization; continue Gateway bench development & Test, HW-Gateway & Ongoing & Oct 21 & Oct 31 & Section~\ref{sec:measurement} procedures & Extended dataset recorded; Gateway bench (Section~\ref{sec:arch-b}) functional ahead of Rev B silicon \\
+\midrule
+\multicolumn{7}{@{}l}{\textbf{November 1--10 --- Rev B bring-up}} \\
+\midrule
+Assemble Rev B-Control, Rev B-Light, Rev B-Gateway & HW-Endpoint, HW-Gateway, Test & Boards arrive & Nov 3 & Nov 5 & Visual/continuity check & No shorts; correct rail voltages on all three \\
+Bring up Greenfield: Clicker + LAN8651 + Rev B-Control + Rev B-Light & Test & Assembly complete & Nov 5 & Nov 7 & Section~\ref{sec:arch-a-proof} procedure & Both endpoints functional simultaneously \\
+Bring up Brownfield: CAN devices + Rev B-Gateway + Clicker & Test & Assembly complete & Nov 5 & Nov 8 & Section~\ref{sec:arch-b} Phase 1/2 procedure & Passive and authorized modes both functional \\
+Confirm both architectures work reliably (repeat runs, not single success) & Test, PM & Both architectures bring-up & Nov 8 & Nov 10 & Repeated trial runs & Consistent results across repeated trials \\
+\midrule
+\multicolumn{7}{@{}l}{\textbf{November 11--15 --- Full validation + Rev C go/no-go (HARD FREEZE Nov 15)}} \\
+\midrule
+Run complete measurement matrix: PLCA, latency, jitter, packet loss, startup/reconnect, Gateway round trip, passive-mode zero-TX, power, fault recovery & Test & Both architectures reliable & Nov 11 & Nov 14 & Section~\ref{sec:measurement} full procedure set & All metrics captured with data on Rev B \\
+\textbf{November 15 architecture freeze / Rev C go-no-go} & PM & Full validation matrix & Nov 15 & Nov 15 & Gate review vs.\ Section~\ref{sec:exit-criteria} & Rev B proves both architectures, or explicit no-go recorded (Section~\ref{sec:feature-cuts}) \\
+\midrule
+\multicolumn{7}{@{}l}{\textbf{November 16--30 --- Rev C / customer demonstration (no new architecture)}} \\
+\midrule
+Rev C mechanical/connector/protection improvements only, if go decision made & HW-Endpoint, HW-Gateway, Layout & Go decision & Nov 16 & Nov 24 & Design review & No circuit differs from validated Rev B \\
+Rev C bring-up and repeated validation, if built & Test & Rev C assembled & Nov 24 & Nov 27 & Section~\ref{sec:measurement} procedures, re-run & Matches or exceeds Rev B baseline \\
+Demo integration (Rev C if validated, otherwise Rev B) & Test, PM & Rev C validated or no-go & Nov 26 & Nov 28 & Dry run & Both architectures run side by side (Section~\ref{sec:final-demo}) \\
+Final documentation and dry run & PM & Demo integration & Nov 28 & Nov 30 & Full dry run & Executes both architectures end to end without intervention \\
+\textbf{November 30 exit gate review} & PM & Everything & Nov 30 & Nov 30 & Section~\ref{sec:exit-criteria} checklists & All mandatory items checked \\
+\bottomrule
+\end{longtable}
+\end{center}
+\end{landscape}

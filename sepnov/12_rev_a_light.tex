@@ -1,0 +1,45 @@
+\section{Rev A-Light --- LAN8661 Development Board}
+\label{sec:rev-a-light}
+
+Tightly related to Rev~A-Control (Section~\ref{sec:rev-a-control}), sharing power, T1S connector/termination, monitoring, test-point strategy, board size, mounting, status indicators, and manufacturing approach; local-interface circuitry differs to match LAN8661's lighting-specific job.
+
+\subsection{What Rev A-Light exposes}
+
+\begin{itemize}[itemsep=0.1em]
+\item LAN8661.
+\item 10BASE-T1S pair, coupling/termination matching Rev~A-Control's approach.
+\item Lighting-related interfaces (whichever of I$^2$C/SPI the confirmed reference design uses to reach an LED-driver IC).
+\item Test points for the lighting-driver control bus, independent of the LED load itself.
+\item Power measurements (supply current with load on/off, to characterize the LED driver's contribution separately from LAN8661's own consumption).
+\item Configuration access consistent with Rev~A-Control's approach.
+\item A connection to the selected LED-driver demonstration hardware (Section~\ref{sec:lan8661-validation}) -- a simple LED driver/load, not optimized for production packaging.
+\end{itemize}
+
+\subsection{Rev A pass gate (both boards)}
+
+Rev~A is successful only when this works:
+
+\begin{diagram}
+                    Clicker
+                       |
+                    LAN8651
+                       |
+               ======= T1S =======
+                 |              |
+                 v              v
+
+              LAN8660        LAN8661
+                 |              |
+              control        lighting
+\end{diagram}
+
+\begin{itemize}[itemsep=0.1em, label={$\square$}]
+\item Both endpoint types are network-visible.
+\item LAN8660 performs real I/O (Section~\ref{sec:lan8660-validation}).
+\item LAN8661 performs real lighting control (Section~\ref{sec:lan8661-validation}).
+\item Both operate simultaneously.
+\item PLCA works (Section~\ref{sec:t1s-plca}).
+\item Quantitative measurements are captured (Section~\ref{sec:measurement}).
+\end{itemize}
+
+This gate must pass \emph{before} Rev~B architecture freezes (Section~\ref{sec:timeline}, October~10 hard gate) -- Rev~B is not started on an unverified assumption about either part's real-world behavior.

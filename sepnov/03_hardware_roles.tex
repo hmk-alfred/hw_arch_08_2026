@@ -1,0 +1,63 @@
+\section{Hardware Roles: LAN8651, LAN8660, LAN8661}
+\label{sec:hardware-roles}
+
+These three parts are not interchangeable. Each has one job.
+
+\subsection{LAN8651 --- host-side MAC-PHY}
+
+\begin{diagram}
+    MCU / host
+       |
+      SPI
+       |
+    LAN8651
+       |
+    10BASE-T1S
+\end{diagram}
+
+LAN8651 places a programmable MCU onto 10BASE-T1S: a MAC-PHY with a 4-wire SPI host interface implementing the OPEN Alliance TC6 10BASE-T1x MAC-PHY Serial Interface specification (SPI clock up to 25\,MHz), PLCA-capable, with an integrated LDO for 3.3\,V-only designs. It is used in exactly two places in this program: behind the \textbf{Clicker~4} (temporary central node) and behind the \textbf{Gateway MCU} (Section~\ref{sec:arch-b}). \textbf{Preferred initial development hardware: MikroE Two-Wire ETH Click (LAN8651-based, mikroBUS-compatible)} -- it plugs directly into the Clicker~4, and the program does not spend its first PCB revision reproducing functionality that already exists on a known-good commercial board.
+
+\subsection{LAN8660 --- Control Endpoint}
+
+\begin{diagram}
+    10BASE-T1S
+        |
+     LAN8660
+        |
+    peripheral interface
+        |
+    motor driver / actuator
+\end{diagram}
+
+LAN8660 is Alfred's Control E2B: a fixed-function, MCU-less 10BASE-T1S endpoint (32-pin, 5$\times$5\,mm VQFN) exposing digital I/O through I$^2$C/SPI/UART on its peripheral-facing side. Configuration, control, and diagnostics happen entirely over the network via the standards-based Remote Control Protocol (RCP), orchestrated by a centralized tool (Microchip MPLAB Network Creator) -- there is no Alfred-authored firmware running on the part itself. AEC-Q100 Grade~1 ($-40$ to $+125^\circ$C), ISO~26262 ASIL~B silicon, per Microchip's current (September 2026) public sell sheet (DS00006257C).
+
+\textbf{What is not yet known, and why:} Microchip's public documentation for LAN8660 is a product-brief-level sell sheet, not a pin-exact datasheet -- full register maps, reference schematics, and exact GPIO/analog capability are gated behind Microchip's secure/NDA documentation program. Requesting that access is a Week~1, critical-path task (Section~\ref{sec:timeline}), and the exact motor-driver/actuator interface (Section~\ref{sec:lan8660-validation}) is deliberately left open until that documentation, or evaluation hardware, is in hand -- consistent with the instruction not to lock an actuator choice before the real interface is understood.
+
+\subsection{LAN8661 --- Lighting Endpoint}
+
+\begin{diagram}
+    10BASE-T1S
+        |
+     LAN8661
+        |
+    lighting-driver interface
+        |
+       LEDs
+\end{diagram}
+
+Same silicon family and MCU-less architecture as LAN8660, specialized for lighting: it bridges T1S video/remote-control data to an external LED driver IC rather than exposing generic sensor/actuator I/O. Same documentation caveat applies -- the exact LED-driver IC (Section~\ref{sec:lan8661-validation}) is chosen after review of Microchip's LAN8661 reference material, not assumed in advance.
+
+\subsection{Why the roles cannot be blurred}
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}p{3.1cm} X@{}}
+\toprule
+\textbf{Attempt} & \textbf{Why it fails} \\
+\midrule
+Use LAN8660/LAN8661 as the Gateway's network chip & RCP is a fixed, network-managed control-plane protocol for peripheral-style I/O, not a general transport an MCU can shape into arbitrary normalized-CAN-frame payloads; there is no host-side ingress path for a companion MCU to inject application-defined traffic. \\
+Put an MCU behind LAN8660/LAN8661 to add custom logic & Wrong interface direction -- their I$^2$C/SPI/UART pins face outward to peripherals, not inward to a host controller. There is nothing for a companion MCU to talk to that would change the endpoint's behavior beyond what RCP already configures. \\
+One populated-selectively PCB serving both E2B and Gateway & Populating LAN8660/LAN8661 makes an MCU, its SPI link, and any firmware image irrelevant, since the endpoint needs none of it -- that is not a population variant of the same board, it is a structurally different device sharing a board outline at most (Section~\ref{sec:platform-strategy}). \\
+\bottomrule
+\end{tabularx}
+\end{center}

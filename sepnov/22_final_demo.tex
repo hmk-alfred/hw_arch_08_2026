@@ -1,0 +1,34 @@
+\section{Recommended Final Demonstration}
+\label{sec:final-demo}
+
+The strongest November demo shows both architectures simultaneously, both reachable from the same Clicker~4.
+
+\begin{diagram}
+                         CLICKER 4
+                             |
+                          LAN8651
+                             |
+                    ======= T1S =======
+                    |                |
+                    |                |
+                    v                v
+
+              GREENFIELD         BROWNFIELD
+                    |                |
+              +-----+-----+       Gateway
+              |           |          |
+           LAN8660      LAN8661     CAN
+              |           |          |
+          actuator      lighting   legacy device
+\end{diagram}
+
+Narrative, delivered in exactly these terms:
+
+\begin{center}
+\begin{minipage}{0.85\linewidth}
+\itshape
+``On the left, this is how Alfred would architect a new machine. On the right, this is how Alfred plugs into a machine you already have. Both expose the machine through the same Ethernet-native Alfred infrastructure. 10BASE-T1S is the common entry point.''
+\end{minipage}
+\end{center}
+
+Run order: open on the Brownfield (right) side so the customer sees their own architecture untouched and Alfred attaching non-invasively first -- the lower-anxiety opening for a brownfield-leaning audience. Show passive mirroring before authorized bidirectional control, narrating the Mode~1/Mode~2 distinction (Section~\ref{sec:gateway-modes}) explicitly before any transmit capability is shown. Then move to the Greenfield (left) side and show the identical Clicker~4 commanding the LAN8660 actuator and the LAN8661 lighting load simultaneously, closing on the single sentence that both sides just ran on the same 10BASE-T1S electrical infrastructure (Section~\ref{sec:platform-strategy}) -- that sentence is the actual sale, not the individual demos.
