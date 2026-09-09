@@ -1,0 +1,15 @@
+\section{Recommended Immediate Next 10 Engineering Tasks}
+\label{sec:next-steps}
+
+\begin{enumerate}
+\item Define and freeze the v0 Capability Manifest / Machine IR schema (Section~\ref{sec:machine-ir}) as an actual JSON Schema (not just the illustrative YAML here) --- every other task depends on this being stable enough to build against.
+\item Build the MVP0 bench rig: a real 12/24V DC motor with Hall feedback, an LED lamp circuit, and 2--3 switches, wired to a small CAN+LIN network on a breadboard/simple PCB (Section~\ref{sec:roadmap}).
+\item Build the first Alfred Bus Module firmware (CAN-FD + LIN capture, timestamped, normalized to the capture-event schema in Section~\ref{sec:probe-discovery}) on an S32K3 or STM32 dev board.
+\item Implement the Capture Service $\rightarrow$ Level 1/2 decode pipeline (deterministic CAN/LIN/ISO-TP/UDS decoders) against real captures from the bench rig.
+\item Implement the Structured Experiment Mode orchestration script (record window, repeat trials, compute co-occurrence score) and the exclusion filters for rolling counters/checksums/periodic signals (Section~\ref{sec:probe-discovery}).
+\item Stand up the Vehicle Knowledge Graph as a real data store (even a simple graph-capable database is sufficient at this stage) and implement the Graph-to-IR promotion compiler with the confidence-threshold policy (Section~\ref{sec:knowledge-graph}).
+\item Implement the Semantic API's first two verb sets (\code{light.*}, \code{actuator.*}) against Machine IR Devices, with the Hardware Mapping layer resolving to either a Gateway protocol adapter or (once it exists) an E2B node.
+\item Implement the Active Test Mode safety stack end-to-end (allowlist config, state validation stub, hardware transmit-enable relay, audit log) even in its minimal form --- this must exist before any actuation demo, not be retrofitted after.
+\item Design and spin the first real E2B-LITE PCB (MCU + 10BASE-T1S PHY + protected GPIO/PWM/ADC), targeting the same lamp/switch peripherals as the bench rig, to prove the manifest-announce $\rightarrow$ native Machine IR registration path (Section~\ref{sec:discovery-a}).
+\item Draft the Target Pack format and a minimal resource planner (pinmux/timer allocation only, deferring DMA/interrupt-priority sophistication) for the E2B-LITE MCU, and generate that board's firmware through it rather than hand-writing it, to validate the firmware-generation architecture's core claim (Section~\ref{sec:firmware-generation}) as early as possible.
+\end{enumerate}

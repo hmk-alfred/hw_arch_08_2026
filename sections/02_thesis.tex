@@ -1,0 +1,51 @@
+\section{Core Alfred Architecture Thesis}
+\label{sec:thesis}
+
+\subsection{One computer, one network, interchangeable hardware}
+
+The thesis, stated precisely as an engineering constraint rather than a slogan:
+
+\begin{decision}[title={Thesis}]
+An application written against Alfred's semantic API must continue to function, unmodified, if the underlying actuator, sensor, bus, or MCU vendor changes --- as long as the new hardware is mapped into the same semantic device class.
+\end{decision}
+
+This requires three separable layers, and the discipline of this document is to keep them separable in the actual software, not just in a diagram:
+
+\begin{diagram}
+Application            door.open()
+Layer                  light.set_state(BRAKE)
+                       actuator.set_position(60%)
+                       pump.set_speed(1200_rpm)
+      |
+      v
+Alfred Semantic API    stable verbs, typed capabilities, units, constraints
+      |
+      v
+Alfred Machine IR      per-vehicle model: which device instance, which
+                       network path, which resource bindings
+      |
+      v
+Hardware Mapping       PWM+Hall | CAN actuator | LIN actuator | Ethernet
+Layer                  actuator | legacy-ECU-via-probe-adapter
+      |
+      v
+Physical Hardware      E2B node, or legacy ECU + wiring harness
+\end{diagram}
+
+The application layer never sees the hardware mapping layer. It sees a \code{LinearActuator} capability set. Whether that capability set is backed by an Alfred E2B node driving a brushed DC motor with a Hall encoder, or by a legacy body control module reached through a validated CAN mapping via the Alfred Probe/Gateway, is resolved entirely below the API line.
+
+\subsection{Target machine classes and why they generalize}
+
+\begin{itemize}
+\item \textbf{Automobiles / light trucks} --- highest peripheral density, most mature standards (AUTOSAR, DBC/ARXML, UDS), best commercial silicon availability (LAN8660/8661, automotive Ethernet PHYs), hardest safety/regulatory bar.
+\item \textbf{Heavy trucks} --- J1939-based CAN, lower peripheral density, longer harnesses (favors twisted-pair/Ethernet over point-to-point), long vehicle lifecycles that reward retrofit (Option B) over replacement.
+\item \textbf{UGVs / defense ground systems} --- frequently already bespoke/low-volume, less standardized, most tolerant of a new central-compute-centric architecture (favors Option A), but also most likely to require air-gapped/no-OTA deployment and higher security assurance.
+\item \textbf{Agricultural machinery} --- ISOBUS (ISO 11783, itself CAN-based) implement interfaces, long service life, harsh EMI/vibration/ingress environment, strong retrofit economics (a \$300k combine is not going to be re-architected, it will be probed and selectively upgraded).
+\item \textbf{Mining / industrial vehicles} --- similar to ag and heavy truck; often proprietary supplier control systems with no public DBC equivalent, making Option B's protocol-reverse-engineering capability the primary value driver rather than a stepping stone.
+\end{itemize}
+
+What is common across all five classes, and what actually generalizes in the architecture, is \emph{not} the vehicle bus (CAN vs. J1939 vs. proprietary) but three things: (1) peripherals decompose into a small number of semantic device classes (linear/rotary actuator, lamp/indicator, switch/button, pump, valve, generic analog/digital sensor, motor with feedback), (2) the electrical interface types underneath those classes are a small, closed set (PWM+GPIO, ADC, SPI/I2C, UART, SENT, LIN, CAN/CAN-FD, Ethernet), and (3) the discovery/validation/firmware-generation \emph{process} is identical even when the specific protocol is not. Alfred is a bet on (1)--(3) being reusable IP; the specific bus adapters are commodity engineering built once per interface type and then reused forever.
+
+\subsection{Placement principle: centralize by default, push to the edge only when physics requires it}
+
+Every control loop in this document is placed using one question: \emph{does closing this loop over the network violate a hard deadline, jitter budget, or fault-containment requirement?} If the answer is no, it belongs on central compute, because central compute is where behavior is easiest to change, log, certify, and update. Section~\ref{sec:hardware-design} defines this as a formal decision framework, not a case-by-case judgment call, because the same framework is what a firmware generator needs in order to make the placement decision automatically instead of requiring a human every time.

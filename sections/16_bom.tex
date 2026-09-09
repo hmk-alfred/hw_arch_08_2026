@@ -1,0 +1,32 @@
+\section{Prototype Component Recommendations}
+\label{sec:bom}
+
+\begin{risknote}[title={Read this before the table}]
+A consumer/industrial dev board is not automatically production-suitable. The table below deliberately separates \emph{what to buy today to build a working prototype} from \emph{the component class a production program must qualify to}. Treat the "Prototype" column as disposable engineering-sample hardware; treat the "Production-automotive class" column as the real design target requiring AEC-Q100/Q200 qualification, automotive temperature grade (typically $-40$ to $+125^\circ$C junction), and, for anything safety-relevant, a documented safety manual/FMEDA from the supplier.
+\end{risknote}
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}p{2.6cm} X X@{}}
+\toprule
+\textbf{Category} & \textbf{Prototype components} & \textbf{Production-automotive component class} \\
+\midrule
+Central compute & NXP S32G274A-EVB or S32G-VNP-RDB2 eval board; or a Raspberry Pi CM4/generic ARM SBC for pure software/API prototyping before real silicon arrives & Automotive-qualified S32G2/S32G3, or Qualcomm Ride/Snapdragon Cockpit automotive SKU, or TI AM69A/TDA4-class, each with OEM-qualified safety documentation \\
+MCU (E2B/Probe) & STM32G4/H7 Nucleo boards; NXP S32K344 evaluation board & NXP S32K3-series automotive-qualified parts (integrated CAN-FD/LIN/HSM), or STM32 automotive "A"-suffix (AEC-Q100) parts \\
+FPGA (probe front end, deferred per Section~\ref{sec:probe-hardware}) & Lattice ECP5 eval board (icestation/ULX3S-class), or Xilinx/AMD Artix-7 eval board, for the eventual $>$16-channel scale-up prototype only & Automotive-qualified FPGA (e.g., Lattice CrossLink-NX automotive, Microchip PolarFire automotive) --- not required until the FPGA decision in Section~\ref{sec:probe-hardware} is actually triggered \\
+CAN-FD transceiver & TI TCAN1042 / TCAN1462 breakout, Microchip MCP2562FD & TI TCAN1462-Q1, NXP TJA1462, Infineon TLE9251-class (AEC-Q100) \\
+LIN transceiver & TI TLIN1029 / NXP TJA1027 breakout & NXP TJA1027/1028-Q1, Infineon TLE7259-3-class \\
+10BASE-T1S PHY & Microchip LAN8670/LAN8671 eval board (SPE Industrial); Microchip LAN8660/LAN8661 for the T1S PLCA MAC-PHY class when driving directly from an MCU without a separate MAC & Same Microchip LAN8660/8661/8670/8671 family already ships automotive-grade variants (LAN867x-Q1-class) --- one of the few interfaces where prototype and production part families are already close \\
+100BASE-T1 PHY & TI DP83TC811/812 eval module, Microchip LAN8801/LAN87xx eval board & TI DP83TC81x-Q1, NXP TJA1101/1102-Q1, Marvell 88Q2110-class \\
+1000BASE-T1 PHY & Marvell 88Q2112 / TI DP83TG720 eval board & Same families' automotive-qualified SKUs (88Q2112-Q1, DP83TG720S-Q1) \\
+Ethernet switch & Microchip LAN9354/KSZ9563-class eval board for basic managed-switch prototyping & NXP SJA1110-class automotive TSN switch, Marvell 88Q5050-class, or SoC-integrated switch (S32G PFE) \\
+Isolation (CAN/LIN/analog probe front ends) & Digital isolators (TI ISO7721-class), isolated DC-DC (Traco/Recom module) on breakout boards & AEC-Q100-qualified digital isolators (TI ISOxxxx-Q1, ADI ADuM-Q1 series), automotive isolated DC-DC modules \\
+Automotive power input & Bench lab supply for prototyping; simple diode-OR + linear/buck reference design & Automotive PMIC with cold-crank and load-dump tolerant front end (TI TPS2H, Infineon TLE9012/PMIC families designed for 12/24V automotive rails) \\
+Surge / load-dump protection & TVS diodes (SMAJ/SMBJ-series) + basic reverse-polarity MOSFET on prototype boards & AEC-Q101 automotive TVS arrays rated for ISO~7637-2 pulse levels (load dump, pulse 1/2a/3a/3b), automotive-grade reverse-polarity/eFuse ICs \\
+Voltage/current measurement & INA219/INA226 breakout boards (I2C current/voltage monitor) for bench work & Automotive-grade current-sense amplifiers (TI INA240-Q1, Allegro ACS-Q1 Hall-effect current sensors) \\
+Storage & Industrial-grade eMMC/microSD on eval boards & Automotive-grade eMMC/UFS (e.g., Micron/Kioxia automotive eMMC lines) with power-fail-safe write behavior \\
+Clock synchronization & Host SoC/MCU software PTP stack (linuxptp) over standard Ethernet for bench validation & Hardware-timestamping automotive Ethernet MAC/PHY (802.1AS support built into the automotive PHYs/switches listed above) \\
+Debug interface & Standard SWD/JTAG probes (ST-Link, Segger J-Link) & Same debug silicon, but production units fuse/lock the port behind a signed-challenge unlock (Section~\ref{sec:acc}) rather than leaving it open \\
+\bottomrule
+\end{tabularx}
+\end{center}

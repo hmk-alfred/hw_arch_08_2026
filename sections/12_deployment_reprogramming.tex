@@ -1,0 +1,113 @@
+\section{Deployment / Reprogramming Architecture}
+\label{sec:deployment-reprogramming}
+
+\subsection{Firmware reprogramming flow (authorized ECUs)}
+
+\begin{diagram}
+   Identify target ECU (from Machine IR / Vehicle Knowledge Graph)
+             |
+             v
+   Determine supported programming path (see 12.2 -- must be a
+   documented/authorized mechanism for THIS ECU; if none exists,
+   go to 12.3 Legacy Adapter path instead)
+             |
+             v
+   Create/update Machine IR entry for the replacement behavior
+             |
+             v
+   Generate firmware (Section 9 pipeline, targeting either a
+   replacement E2B node, or -- only where the OEM/Tier-1 has
+   authorized custom firmware on THEIR ECU hardware -- that
+   ECU's own target pack)
+             |
+             v
+   SIL  (simulate against Machine IR model of the vehicle)
+             |
+             v
+   HIL / bench validation (Alfred Lab hardware, Section 15;
+   real target hardware, simulated/recorded vehicle network
+   traffic, physical load where applicable e.g. a real motor
+   on a bench fixture)
+             |
+             v
+   Create signed deployment artifact (binary + manifest +
+   certification evidence bundle, Section 9)
+             |
+             v
+   Program ECU (mechanism per 12.2)
+             |
+             v
+   Verify (read-back / checksum verification; functional smoke
+   test via Active Test Mode allowlist, Section 11)
+             |
+             v
+   Health check (extended monitoring window post-flash before
+   marking deployment "confirmed" rather than "pending")
+             |
+             v
+   Rollback if required (previous signed image retained on-target
+   or on adapter until health check passes; automatic revert on
+   health-check failure or operator command)
+\end{diagram}
+
+\subsection{Legitimate programming mechanisms}
+
+\begin{itemize}
+\item \textbf{UDS programming} where the OEM/Tier-1 has documented and authorized the flash-programming service (0x34/0x36/0x37) and provided or approved the security-access seed/key exchange for that ECU --- Alfred implements the documented sequence, it does not attempt to derive or brute-force security access algorithms.
+\item \textbf{Vendor bootloaders} for supplier modules where the vendor has published (or licensed to the program) a bootloader protocol.
+\item \textbf{SWD/JTAG} during development, on development/bench hardware or explicitly authorized development vehicles, using standard debug-port access --- not on production units with debug ports intentionally fused/locked by the OEM.
+\item \textbf{USB DFU} and \textbf{serial bootloaders} where the target MCU/module natively exposes one (common on many E2B-class and supplier peripheral modules).
+\item \textbf{OEM OTA mechanisms} where Alfred is integrated as an authorized content source into an OEM's own OTA campaign infrastructure, rather than operating a competing/parallel unauthorized channel.
+\end{itemize}
+
+\begin{risknote}[title={Explicit non-goal}]
+Bypassing cryptographic authentication, secure boot, immobilizer logic, or gateway security mechanisms is out of scope categorically, not just as a policy preference: any ECU whose documented/authorized programming path is unavailable is a Legacy Adapter target (below), never a target for security-bypass engineering.
+\end{risknote}
+
+\subsection{Legacy Adapter / Proxy Mode}
+
+\begin{diagram}
+   Original ECU remains in place, unmodified
+             |
+             v
+   Alfred Adapter / Gateway (Section 12.4) -- observes and, where
+   validated (Section 11), issues commands through the ECU's own
+   existing legitimate command surface (its normal CAN/LIN inputs,
+   exactly as its original upstream ECU would have driven it)
+             |
+             v
+   Semantic Alfred API (device behaves identically to a native
+   E2B-backed device from the application's point of view)
+\end{diagram}
+
+This is the answer to "ECU cannot legally/technically be reprogrammed": Alfred does not need write access to the ECU's firmware to bring it under the Semantic API. It needs a \emph{validated mapping} of the ECU's existing, intended command inputs (the same commands its original upstream controller already legitimately sends it) and a protocol adapter that reproduces those commands through the same bus the original controller used. The ECU's own security model (if any) governing acceptance of those commands is unchanged; Alfred is acting as a substitute for the original commanding ECU, using the same interface that ECU's supplier documented or that Alfred's Structured Experiment Mode validated as the legitimate, intended input.
+
+\subsection{Probe to Gateway evolution}
+
+\begin{diagram}
+                     Alfred Applications
+                             |
+                        Semantic API
+                             |
+                      Alfred Gateway  (production-hardened
+                     /      |       \  descendant of the
+                   CAN     LIN    Ethernet   development Probe)
+                    |       |        |
+              legacy vehicle electrical architecture
+\end{diagram}
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}X X@{}}
+\toprule
+\textbf{Gateway mode is feasible when} & \textbf{Gateway mode is NOT feasible when} \\
+\midrule
+The target function's legitimate command surface has been fully characterized and validated (confidence above threshold, Section~\ref{sec:knowledge-graph}) and sits on a bus/segment the Gateway has continuous authorized access to & The target ECU authenticates its commanding peer (session keys, challenge-response) in a way not reproducible without secrets Alfred does not possess and has not been granted \\
+The function is non-safety-critical or has an explicit, separately-reviewed safety case (Section~\ref{sec:active-control}) & The function is safety-critical and out of the authorized scope boundary \\
+Command timing/rate requirements are within what a Gateway on that bus segment can sustain without disrupting other legitimate traffic (bus-load budget) & Real-time/safety requirements demand the low, deterministic latency only the original co-located ECU can provide, and Gateway-added latency would violate it \\
+The OEM/Tier-1/fleet owner has authorized standing, continuous (not just one-time-experiment) command access & No such standing authorization exists --- one-time validated experiments do not imply a license to operate continuously \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+The Gateway is architecturally a production-hardened Probe: same modular bus front-ends (Section~\ref{sec:probe-hardware}), same Safety Policy Engine and interlocks (Section~\ref{sec:active-control}), but now provisioned for continuous unattended operation (watchdog-supervised, OTA-updatable, ASIL-considered for its own failure modes since it is now in the command path rather than only observing) instead of bench/lab session use. This reuse is deliberate: it means Option B's hardware investment (Probe) directly becomes Option B's production hardware (Gateway) rather than being throwaway discovery tooling, which is one of the concrete points of leverage discussed in Section~\ref{sec:convergence}.

@@ -1,0 +1,24 @@
+\section{Competitive Differentiation}
+\label{sec:differentiation}
+
+Each category below is a real, buildable product on its own, and each is also a component Alfred needs. The differentiation claim is specifically that Alfred is not competing to be the best version of any single one of them --- it is the only one of these that stitches all of them behind one abstraction, and that stitching is what a single-purpose competitor structurally cannot copy without becoming Alfred.
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}p{2.6cm} X@{}}
+\toprule
+\textbf{If Alfred were "just"...} & \textbf{...why that's not defensible alone} \\
+\midrule
+A CAN analyzer & Vector/PEAK/Kvaser/Intrepid already own this market with decades of protocol-decode depth; competing on capture/decode UX alone is a feature race Alfred would enter late and behind. \\
+A vehicle gateway & Every Tier-1 already ships gateway ECUs; a standalone gateway is a commodity module unless it is backed by a semantic mapping layer that makes it \emph{programmable} rather than just a protocol translator, which requires everything upstream of it (Machine IR, Knowledge Graph). \\
+A firmware generator & Generic embedded code-gen (or an LLM coding assistant pointed at firmware) has no way to know what hardware is actually attached to a given board without the discovery/manifest/IR layer feeding it real constraints --- it can generate plausible-looking code, not verified, resource-planned, deployable firmware. \\
+An RTOS & Zephyr/FreeRTOS/AUTOSAR already solve "run real-time code on an MCU"; an RTOS has no opinion about what peripheral is attached or how to represent it semantically. \\
+An automotive Ethernet node & Any Tier-1 can build a 10BASE-T1S-to-GPIO board; the hardware is genuinely commodity-adjacent (Section~\ref{sec:e2b-family} deliberately uses COTS silicon for exactly this reason) --- the differentiation has to be in what turns that board into a self-describing, centrally-orchestrated Device. \\
+An AI coding assistant & Useful for the AI-assisted stages in Section~\ref{sec:firmware-generation}, but by itself has no access to real hardware resource constraints, no verified primitive library, and no deployment/safety gating --- it is an input to Alfred's pipeline, not a substitute for it. \\
+A digital twin & A twin without ground-truth hardware mapping is a simulation exercise; Alfred's twin-equivalent (the Machine IR) is valuable specifically because it is continuously validated against real electrical/physical measurement (Section~\ref{sec:physical-correlation}), not just modeled from datasheets. \\
+A HIL tester & HIL vendors (dSPACE, National Instruments, Vector) test a fixed, already-known ECU design against test vectors; they do not discover an unknown machine's topology or generate the firmware under test in the first place. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+The unifying argument: every row above is a point solution that assumes the hard problem (knowing what hardware exists, what it means, and how to safely command it) is already solved. Alfred's actual product \emph{is} solving that problem, once, in a reusable form, and every point-solution vendor above is a potential supplier of commodity silicon or tooling to Alfred, not a like-for-like competitor to the platform itself.

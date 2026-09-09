@@ -1,0 +1,43 @@
+\section{Option A --- Alfred-Native Architecture (Overview)}
+\label{sec:option-a-overview}
+
+\subsection{System shape}
+
+\begin{diagram}
+                         +-----------------------+
+                         |   ALFRED CENTRAL       |
+                         |   COMPUTE (ACC)        |
+                         |  App CPU | RT MCU |    |
+                         |  Ethernet Switch | TSN |
+                         +-----------+-----------+
+                                     |
+                     Ethernet Backbone (100/1000BASE-T1
+                     trunk; 10BASE-T1S multidrop spurs)
+                                     |
+        +----------------+----------+----------+----------------+
+        |                |                     |                |
+   +----+----+      +----+----+           +----+----+      +----+----+
+   | E2B-BODY|      |E2B-MOTOR|           |E2B-SENSOR|     |E2B-LITE |
+   | Front   |      | L/R door|           | Cabin    |     | Rear    |
+   | Zone    |      | actuators|          | climate/ |     | lights/ |
+   +----+----+      +----+----+           | occupant |     | switches|
+        |                |                +----+----+      +----+----+
+   headlamps,        motor + Hall,             |                |
+   wipers, horn      current sense        temp/humidity/   turn/brake/
+   (LIN+PWM+CAN)     (PWM+ADC+enc)        pressure (SPI/    reverse lamps
+                                          I2C/SENT)         (PWM+GPIO)
+\end{diagram}
+
+Central compute owns the Ethernet backbone. 10BASE-T1S segments act as multidrop "zone spurs" reaching lite/body/sensor nodes where bandwidth needs are under $\sim$1--2~Mbps aggregate and multidrop wiring materially simplifies the harness; 100BASE-T1 point-to-point links reach motor-control and any node producing appreciable telemetry volume; 1000BASE-T1 is reserved for nodes carrying camera/lidar-class or other high-bandwidth payloads (E2B-HIGH-SPEED). CAN-FD and LIN appear \emph{inside} an E2B-BODY node only where the peripheral itself is a purchased sub-assembly that already speaks CAN or LIN (e.g., an off-the-shelf seat motor module, a supplier HVAC compressor controller) --- i.e., legacy protocols are tolerated at the last centimeter of the network, never as the backbone.
+
+\subsection{What is genuinely new here vs. what is standard automotive practice}
+
+Zonal architectures with an Ethernet backbone and 10BASE-T1S edge fan-out are an industry direction already (this is directionally where OEMs are moving with SDV/zonal E/E). What is \emph{not} standard practice, and what constitutes Alfred's contribution in Option A, is:
+
+\begin{itemize}
+\item Edge nodes that are \textbf{generic and self-describing} rather than function-specific and hand-coded --- an E2B node does not ship with "door controller firmware," it ships with a small set of verified I/O drivers plus a capability manifest, and the \emph{behavior} (what a door does when you call \code{open()}) is defined centrally.
+\item A \textbf{deterministic firmware generation pipeline} (Section~\ref{sec:firmware-generation}) that produces the edge node's firmware image from a machine model, rather than an engineer writing zone-controller C code by hand per program.
+\item A single \textbf{Machine IR} that represents both native E2B peripherals and legacy/probed peripherals identically, so the central application layer is portable across both.
+\end{itemize}
+
+Section~\ref{sec:hardware-design} gives the full central-compute and E2B hardware design; Section~\ref{sec:software-design} gives the full software stack.

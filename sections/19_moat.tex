@@ -1,0 +1,53 @@
+\section{Technical Moat}
+\label{sec:moat}
+
+\subsection{The compounding asset stack}
+
+\begin{diagram}
+   hardware knowledge            (MCU/PHY/transceiver facts, per-part
+        +                         init sequences, errata workarounds)
+   vehicle topology knowledge    (per-OEM-platform network layouts,
+        +                         gateway routing patterns)
+   semantic peripheral ontology  (the closed set of device classes and
+        +                         their capability contracts, Section 2)
+   verified drivers              (Verified Primitive Library entries,
+        +                         Section 6)
+   verified application          (tested Behavior-layer compositions
+   primitives                     for common functions: door-lock
+        +                         interlocks, lighting state machines)
+   network mappings              (Vehicle Knowledge Graph entries,
+        +                         confidence-scored, reusable within
+                                   and often across same-platform
+                                   vehicles)
+   firmware generation           (Target Packs, resource-planner
+        +                         constraint models per MCU family)
+   hardware measurements         (real electrical characterization
+        +                         data: actual current draw, actual
+                                   servo bandwidth, actual EMI behavior
+                                   of specific supplier peripherals)
+   validation evidence           (SIL/HIL results, static analysis
+                                   history, certification-evidence
+                                   bundles per primitive/target)
+\end{diagram}
+
+Every layer above is populated by \emph{doing the work} of bringing one more machine under Alfred, and every layer above is reusable on the next machine to a degree a point-solution competitor's equivalent artifact is not: a CAN analyzer vendor's decoded-signal database is not attached to a verified, deployable driver; a firmware-generation tool's templates are not attached to real measured electrical behavior of the specific parts a customer actually uses; an RTOS vendor's board-support packages are not attached to a semantic ontology that lets an application call \code{pump.set\_speed()} without knowing which BSP is underneath.
+
+\subsection{What compounds fastest, and why}
+
+\begin{itemize}
+\item \textbf{Hardware Knowledge Graph entries for common parts} (a specific CAN transceiver's init quirks, a specific motor driver IC's fault-reporting behavior) are reusable across every customer and every vehicle class immediately --- this is the highest-leverage layer to invest in early because its reuse rate is nearly 100\%.
+\item \textbf{Per-OEM-platform network mapping patterns} (Option B) compound within a platform family fast (a second vehicle from the same OEM/platform generation shares most CAN-ID semantics with the first) and compound more slowly but still meaningfully across platforms (turn-signal-style signals tend to occupy structurally similar positions across many OEMs' body networks for historical/supplier reasons) --- this is genuinely proprietary data no competitor can buy, because it is built from Alfred's own accumulated experiment/correlation runs, not from public specs.
+\item \textbf{Verified Primitive Library entries} compound across vehicle classes, not just within one: a verified brushed-DC-motor-with-Hall-feedback primitive built for an automotive seat motor is directly reusable for an agricultural implement actuator or a UGV control surface, because the semantic ontology (Section~2) was deliberately designed around electrical interface types, not vehicle-specific function names.
+\item \textbf{Validation/certification evidence} compounds specifically for regulated programs: a primitive that has already accumulated a track record of HIL results and static analysis history across N prior deployments is cheaper to qualify for the N+1th program's functional-safety case than a from-scratch primitive, which becomes a genuine switching cost for a customer once they have several primitives in production.
+\end{itemize}
+
+\subsection{5--10 year moat candidates}
+
+\begin{enumerate}
+\item \textbf{The cross-vehicle Hardware Knowledge Graph itself}, once it spans enough parts and platforms that a competitor starting today would need years of equivalent field engagements to reach parity --- this is a data moat in the classic sense: value scales with usage, and usage is gated by having already done the (expensive, physical, non-scrapable) work of touching real machines.
+\item \textbf{The Verified Primitive Library's breadth and track record}, which functions like a certified-parts catalog that gets more valuable to a safety-conscious customer the longer its field history is, similar in kind to how an RTOS's certification pedigree (e.g., a pre-certified SafeRTOS kernel) becomes a switching cost independent of the code itself.
+\item \textbf{The deterministic firmware-generation pipeline's Target Pack ecosystem}, if Alfred reaches enough MCU-family coverage that "which MCU can Alfred already generate firmware for" starts to shape customers' own hardware choices, analogous to how AUTOSAR MCAL vendor support shapes OEM MCU selection today.
+\item \textbf{Structured-experiment-derived semantic mapping patterns for closed/proprietary industrial and ag/mining control systems}, where no public DBC/ARXML equivalent exists at all --- this is the category where Alfred's discovery methodology is hardest to replicate quickly because there is no shortcut through public documentation; it must be earned per platform through the correlation/experiment pipeline.
+\end{enumerate}
+
+None of these moats exist at MVP0--2 scale (Section~\ref{sec:roadmap}); they are the reason the roadmap prioritizes getting real engagements running as early as possible even with a minimal feature set --- the moat is a function of elapsed engagements and accumulated verified artifacts, not of how complete the initial architecture is.

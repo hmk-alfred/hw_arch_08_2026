@@ -1,0 +1,83 @@
+\section{Firmware Generation Architecture}
+\label{sec:firmware-generation}
+
+\subsection{Pipeline}
+
+\begin{decision}[title={Explicitly rejected approach}]
+\code{prompt $\rightarrow$ LLM $\rightarrow$ arbitrary firmware} is not the architecture. An LLM is never the component that emits the binary that runs on a safety-relevant peripheral controller. It is a component that helps populate structured inputs to a deterministic pipeline, and every deterministic stage downstream of it re-validates its output against a schema before anything is trusted.
+\end{decision}
+
+\begin{diagram}
+  Requirements (natural language, imported specs, or IR diff request)
+        |
+        v   <-- AI-assisted: interpret requirements/datasheets, propose
+        |        candidate device classification and mappings
+  Structured Machine Model (schema-validated: device list, desired
+  capabilities, target node hardware, constraints)
+        |
+        v   <-- deterministic: schema validation, constraint checking
+  Machine IR (Section 7)
+        |
+        v   <-- deterministic: resource planner
+  Resource Planner:
+     - pinmux assignment (from Target Pack's pin/peripheral map)
+     - timer allocation (PWM channels, input-capture channels)
+     - DMA channel allocation
+     - interrupt priority assignment (matched to ControlLoop deadlines)
+     - task/scheduler slot assignment (RTOS task periods, WCET budget)
+     - memory map / linker region allocation
+     - network configuration (VLAN/priority queue per Device's traffic
+       class, per TSN policy)
+     - watchdog window configuration
+     - power-state / sleep policy per node
+        |
+        v   <-- deterministic: component selection against Verified
+        |        Primitive Library (never "generate a driver from
+        |        scratch" -- select and parameterize a verified one,
+        |        or flag a gap for human/AI-assisted authoring of a
+        |        NEW primitive that then itself enters verification)
+  Verified Component Selection
+        |
+        v   <-- deterministic: code generation from Target Pack +
+        |        selected primitives + resource plan (templated,
+        |        not free-form generation)
+  Deterministic Code Generation
+        |
+        v   <-- deterministic: standard toolchain
+  Build (cross-compiler, linker, map file cross-checked against
+         resource plan)
+        |
+        v   <-- deterministic + AI-assisted failure triage
+  Verification:
+     - static analysis (MISRA-C class checks, bounds/overflow analysis)
+     - unit tests against Verified Primitive Library test suite
+     - SIL (software-in-the-loop against a simulated Machine IR)
+     - HIL (Section 12; bench validation against real E2B hardware)
+        |
+        v
+  Signed Binary + Certification Evidence bundle (Section 6.1, item 12)
+\end{diagram}
+
+\subsection{Resource planning is where "AI writes firmware" actually gets replaced}
+
+Pinmux, timer/DMA allocation, interrupt priority, and memory layout are the parts of embedded firmware development that are simultaneously (a) the most error-prone to do by hand, and (b) fully mechanical once the inputs (MCU resource table from the Target Pack, ControlLoop deadlines from the Machine IR, Device list) are known. This is a constraint-satisfaction problem, not a generative one: given N devices each requiring specific peripheral types and timing guarantees, and a fixed MCU resource table, find a conflict-free allocation, or fail with a specific, actionable conflict report ("Device X requires a 16-bit timer with input-capture; only 8-bit timers remain unallocated on e2b\_node\_12"). Implement it as a solver (constraint propagation / SAT-style, not ML) precisely because its failure mode needs to be "provably no solution exists" or "here is the solution," never "probably fine."
+
+\subsection{Division of labor: AI vs. deterministic tooling}
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}X X@{}}
+\toprule
+\textbf{AI-assisted (proposes, never commits)} & \textbf{Deterministic (validates and commits)} \\
+\midrule
+Interpret free-text/ambiguous requirements into candidate structured fields & Schema validation of every structured artifact at every stage boundary \\
+Interpret supplier datasheets to propose a candidate Verified-Primitive parameterization (e.g., "this looks like a standard H-bridge driver, register map suggests these defaults") & Resource allocation (pinmux/timer/DMA/interrupt/memory) via constraint solver \\
+Classify an unknown device (Option B) into a candidate semantic type & Constraint enforcement (electrical limits, timing budgets, safety-class rules) \\
+Propose candidate signal-to-behavior mappings (Option B correlation hypotheses) & Compilation, linking, static analysis \\
+Generate test candidates (edge cases, fuzz seeds, experiment scripts for Section~\ref{sec:probe-discovery}'s structured experiments) & Artifact verification (signature checks, hash matching against build record) \\
+Explain \emph{why} a build/test failed in human-readable terms, suggest likely root cause & Deployment gating and rollback (Section~\ref{sec:deployment-reprogramming}) \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Every AI-proposed artifact crosses into the deterministic pipeline through exactly one gate: schema validation against the Structured Machine Model. Nothing an AI model outputs is ever compiled, flashed, or transmitted to a vehicle without first passing through that gate and the resource planner/constraint checks after it. This is what makes the pipeline auditable for functional-safety evidence purposes: every artifact after the Structured Machine Model stage has a fully deterministic, re-runnable derivation.

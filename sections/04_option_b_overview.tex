@@ -1,0 +1,40 @@
+\section{Option B --- Alfred Discovery Architecture (Overview)}
+\label{sec:option-b-overview}
+
+\subsection{System shape}
+
+\begin{diagram}
+                     +----------------------+
+                     |   ALFRED ANALYZER    |
+                     |  (aggregation +      |
+                     |   discovery engine)  |
+                     +-----------+----------+
+                                 |
+                        Gigabit Ethernet (host-side,
+                        isolated from vehicle network)
+                                 |
+        +------------------+----+----+------------------+
+        |                  |         |                  |
+   +----+-----+      +-----+----+ +--+-------+     +-----+-----+
+   |Probe Node|      |Probe Node| |Probe Node|     |Probe Node |
+   |  A: CAN/ |      |  B: Auto |     |  C: LIN/ |     |  D: Analog/|
+   |  CAN-FD  |      |  Ethernet|     |  UART    |     |  PWM/Hall  |
+   +----+-----+      +-----+----+ +--+-------+     +-----+-----+
+        |                  |         |                  |
+   OBD-II / splice     TAP on         splice into      probe points on
+   into CAN-B, CAN-C   100/1000BASE-T1  LIN-2, LIN-3    motor leads,
+   harness (dev unit)  segment (dev)   body network      Hall sensor test
+                                                          points
+\end{diagram}
+
+The probe is explicitly \emph{distributed}, not a single OBD-II dongle, because OBD-II is a single point behind at least one gateway and typically exposes only diagnostic-relevant traffic on one or two buses. A distributed set of probe nodes, each timestamp-synchronized to the others, can observe multiple physically separate buses (CAN-B body network, CAN-C powertrain, a LIN sub-bus behind a body controller, an automotive Ethernet backbone segment) simultaneously and correlate across them --- which is the entire basis of the semantic-identification workflow in Section~\ref{sec:probe-discovery}.
+
+\subsection{The passive/active boundary}
+
+\begin{decision}[title={Non-negotiable design boundary}]
+Passive capture and active experimentation are architecturally separate modes with separate hardware enable paths (Section~\ref{sec:active-control}). A probe node cannot transmit unless: (1) it is explicitly placed in Active Test Mode by an operator, (2) the target signal has a validated mapping with confidence above threshold, (3) the command passes an allowlist and state-validation policy, and (4) a hardware transmit-enable line (not just a software flag) is asserted. Default state on power-up is receive-only.
+\end{decision}
+
+\subsection{From bytes to behavior}
+
+Option B is a four-stage pipeline, detailed in Sections~\ref{sec:probe-discovery}--\ref{sec:knowledge-graph}: electrical/protocol identification $\rightarrow$ network protocol recognition $\rightarrow$ semantic identification (via structured experiments and/or imported engineering files) $\rightarrow$ Vehicle Knowledge Graph, which is then compiled into the same Machine IR that Option A populates directly from E2B capability manifests. That equivalence is what makes convergence (Section~\ref{sec:convergence}) real rather than aspirational.

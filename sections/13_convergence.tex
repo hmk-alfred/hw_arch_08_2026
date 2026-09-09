@@ -1,0 +1,67 @@
+\section{How Option A and Option B Converge}
+\label{sec:convergence}
+
+\subsection{One platform, two ingestion paths}
+
+Option A and Option B are not two products, two codebases, or two companies. They are two different \emph{producers} of the same consumed artifact: a populated Machine IR entry with a bound Device.
+
+\begin{diagram}
+GREENFIELD                              BROWNFIELD
+   peripheral                              legacy ECU / peripheral
+       |                                       |
+       v                                       v
+   Alfred E2B                          Alfred Probe / Adapter
+   (Section 5.2, 6.2)                  (Section 5.3, 6.3, 10)
+       |                                       |
+       v                                       v
+   Native Capability Manifest          Vehicle Knowledge Graph
+   (confidence = 1.0)                  (confidence, per Section 8.3)
+       |                                       |
+       +-------------------+-------------------+
+                            |
+                            v
+                    Alfred Machine IR   (Section 7 --
+                    identical structure regardless of origin)
+                            |
+                            v
+              Hardware Mapping / Device Abstraction
+                            |
+                            v
+                     Alfred Semantic API
+                            |
+                            v
+                    Alfred Applications
+                    (identical code, either machine)
+\end{diagram}
+
+\begin{diagram}
+                        Alfred Applications
+                               |
+                               v
+                          Alfred API
+                               |
+                               v
+                          Machine IR
+                         /          \
+                        /            \
+             Alfred-native          Legacy
+               machine              machine
+                  |                    |
+              E2B nodes          Probe/Gateway
+                  |                    |
+             peripheral          existing ECUs
+\end{diagram}
+
+\subsection{What "the same application logic works across both" actually requires}
+
+This claim is only true if three things hold, and each is a concrete engineering commitment made elsewhere in this document, not a hand-wave:
+
+\begin{enumerate}
+\item \textbf{Identical Semantic API regardless of Device provenance} (Section~\ref{sec:machine-ir}, \ref{sec:software-design}): the Hardware Mapping layer resolves \code{door.open()} to a Device by semantic type and capability, never by asking the application whether the Device is E2B-backed or Probe/Gateway-backed. An application author cannot even query provenance through the Semantic API by design --- provenance is metadata for Alfred's own tooling (confidence-gating, audit), not an application-visible property.
+\item \textbf{Comparable capability semantics across origins}: a \code{LinearActuator.move\_to\_position} call means the same thing --- same units, same behavior at the boundaries (what happens at \code{max\_position}, what a \code{stop()} does to an in-flight move) --- whether it is backed by an E2B-MOTOR node's local position servo or by a Gateway reproducing a legacy ECU's own command protocol. This is enforced by the Verified Primitive Library's semantic-type contracts (Section~\ref{sec:software-design}), which both a native driver and a legacy protocol adapter must implement identically.
+\item \textbf{Confidence and safety gating happen below the API, not in the application}: an application calling a Probe-discovered, sub-threshold-confidence Device simply does not see that Device exposed at all (Section~\ref{sec:knowledge-graph}), so the application never has to contain "is this legacy mapping trustworthy" logic itself.
+\end{enumerate}
+
+\subsection{Why this is the actual product, not the hardware}
+
+If Alfred only sold E2B boards, it would be an automotive edge-controller vendor, competing on BOM cost against every Tier-1 module supplier. If Alfred only sold a Probe, it would be a CAN-bus analyzer vendor, competing against Vector/PEAK/Kvaser-class tooling. The reason the two converge into the Machine IR is what makes the company's actual asset the \emph{mapping and abstraction layer itself} --- which is reusable software and accumulated knowledge (Section~\ref{sec:moat}), not a piece of hardware with a BOM cost floor. A customer's first engagement (almost always Option B, per Section~\ref{sec:migration}) and Alfred's long-term hardware business (Option A, as legacy ECUs get replaced) are the \emph{same} revenue relationship maturing over time, not two separate sales motions into two separate markets.

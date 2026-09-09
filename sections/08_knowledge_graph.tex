@@ -1,0 +1,77 @@
+\section{Vehicle Knowledge Graph}
+\label{sec:knowledge-graph}
+
+\subsection{Why not just a PCAP archive}
+
+A capture log answers "what bytes appeared on the wire." It does not answer "what does this vehicle do," "what depends on what," or "how confident are we." The Vehicle Knowledge Graph is the structured object that Section~\ref{sec:probe-discovery}'s discovery pipeline exists to build, and it is the only Option-B artifact that ever gets compiled into Machine IR.
+
+\begin{diagram}
+                              Vehicle
+                                 |
+        +---------+---------+---+---+---------+-----------+
+        |         |         |       |         |           |
+     Networks  Gateways    ECUs  Peripherals Signals   Commands
+        |                    |       |          |           |
+   CAN-B, CAN-C,       body_ctrl  rear_left   turn signal  enable
+   LIN-2, LIN-3,       gateway    lamp, seat  candidates    turn(L)
+   100BASE-T1 bkbn      module    motor, ...  w/ confidence
+        |
+        +-- Physical behaviors (motion, illumination, measured
+        |     current/voltage -- from Section 10.6 correlation)
+        +-- Dependencies (this signal only appears when ignition=on;
+        |     this actuator command is gated by a door-closed input)
+        +-- Confidence scores (attached at every edge, not just leaf nodes)
+\end{diagram}
+
+\subsection{Example schema instance}
+
+\begin{lstlisting}[language=alfredspec]
+device:
+  id: rear_left_lamp
+  controlled_by: rear_body_controller
+
+network_path:
+  - hop: central_gateway
+  - hop: CAN-B
+  - hop: rear_body_controller
+  - hop: LIN-3
+
+capabilities_observed:
+  - brake
+  - turn
+  - running_light
+
+observed_mappings:
+  turn:
+    layer: LIN
+    bus: LIN-3
+    frame_id: 0x17
+    byte: 1
+    bit: 4
+    confidence: 0.981
+    evidence:
+      - experiment_run: exp_2026_09_02_014
+        trials: 12
+        hits: 12
+      - passive_correlation: corr_run_0088
+        co_occurrence_score: 0.94
+  brake:
+    layer: CAN
+    bus: CAN-B
+    arbitration_id: 0x318
+    byte: 4
+    bit: 2
+    confidence: 0.943
+    evidence: [experiment_run: exp_2026_09_02_020]
+  running_light:
+    confidence: 0.61   # below promotion threshold -- stays in graph
+                        # only, NOT compiled into Machine IR yet
+\end{lstlisting}
+
+\subsection{Graph-to-IR promotion policy}
+
+\begin{decision}[title={Promotion threshold}]
+A knowledge-graph edge is compiled into a Machine IR \code{Device}/\code{ResourceBinding} entry --- and therefore becomes callable through the Semantic API, even in a gated/monitor-only capacity --- only above a configured confidence threshold (default 0.90, tunable per safety class of the target function; higher for anything that will ever be actuated, lower acceptable for read-only telemetry). Below threshold, the mapping is visible in graph-browsing/debug tooling but not exposed as an API-callable Device. This keeps "Alfred thinks it found something" and "Alfred will let you use it" architecturally distinct, which is the same discipline Section~\ref{sec:active-control} applies at the command level.
+\end{decision}
+
+Every edge in the graph --- not just terminal signal mappings --- carries its own confidence and evidence references, because dependencies compound: a signal mapping inferred from an experiment run while the vehicle was in an unusual state (e.g., ignition off) should not silently inherit high confidence if the \emph{network path} through which it was observed is itself uncertain (e.g., ambiguous gateway routing). The graph stores confidence per edge specifically so the promotion policy can require the \emph{weakest} link in a path to clear the threshold, not just the leaf signal.

@@ -1,0 +1,17 @@
+\section{Executive Summary}
+\label{sec:exec-summary}
+
+Alfred Labs' thesis is that the electrical/electronic (E/E) architecture of a machine --- car, truck, UGV, tractor, mining vehicle --- should not determine how that machine is programmed. Today it does: every actuator, sensor, and ECU exposes a supplier-specific, protocol-specific, often undocumented interface, and every integration is bespoke. Alfred's product is the layer that removes that constraint: a semantic API (\code{door.open()}, \code{actuator.set\_position()}, \code{pump.set\_speed()}) that is stable regardless of what silicon, bus, or supplier sits underneath it.
+
+This document specifies two architectures that both terminate in that same API surface:
+
+\begin{itemize}
+\item \textbf{Option A --- Alfred-Native (Greenfield).} A vehicle designed from the start around a central compute node, an Ethernet backbone (10BASE-T1S/100BASE-T1/1000BASE-T1 as appropriate), and a family of Alfred E2B edge nodes that turn raw peripherals (motors, sensors, lights, doors) into network-addressable, self-describing devices. Application logic runs centrally; only genuinely hard-real-time control loops execute at the edge.
+\item \textbf{Option B --- Alfred Discovery (Brownfield).} A vehicle with an existing, unmodified CAN/CAN-FD/LIN/automotive-Ethernet architecture. The Alfred Probe attaches to accessible buses and networks, passively listens, correlates observed traffic with physical/electrical behavior, and builds a Vehicle Knowledge Graph. Once mappings are validated, an authorized Active Test Mode allows controlled, policy-gated actuation through the same semantic API, and (where legally/technically supported) Alfred can generate and deploy replacement firmware for specific ECUs.
+\end{itemize}
+
+The critical architectural claim of this document is in Section~\ref{sec:convergence}: Options A and B are not two products. They are two different \emph{ingestion paths} into the same \textbf{Alfred Machine IR} (Intermediate Representation). Once a peripheral --- native or legacy --- is represented in the IR, the same application code drives it. This is what makes Alfred a platform rather than a tool: an E2B node and a Probe-discovered legacy ECU are, from the application's point of view, indistinguishable.
+
+This gives Alfred a credible, low-risk go-to-market motion (Section~\ref{sec:migration}): enter a customer's existing fleet non-invasively via the Probe, build the knowledge graph, prove value on non-safety-critical subsystems (lighting, seats, doors, HVAC), and only then --- where the customer wants it --- progressively replace legacy ECUs with Alfred-native hardware, collapsing bus-based islands into the Ethernet-centric architecture.
+
+The compounding asset is not the hardware. It is the accumulated \textbf{hardware knowledge graph}: verified drivers, verified peripheral ontologies, verified network mappings, and firmware generation templates that get reused and refined across every subsequent machine (Section~\ref{sec:moat}). The recommended 12-month plan (Section~\ref{sec:final-recommendation}) is to prove exactly one thing very convincingly: that the same application, unmodified, can control the same class of physical peripheral on both a legacy vehicle (via Probe) and a purpose-built rig (via E2B) --- because that is the entire value proposition in one demo.

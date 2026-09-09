@@ -1,0 +1,29 @@
+% Worklog entries -- APPEND ONLY. Add new \worklogentry{...}{...}{...} blocks
+% at the end of this file; never edit or delete a prior entry. Keep
+% worklog/WORKLOG.md in sync (one-line-per-session summary, human/git-facing).
+
+\worklogentry{2026-09-08}{Initial architecture document authored}{
+Set up the project (git repo, LaTeX multi-file build, worklog mechanism) and
+wrote the full first draft of the Alfred architecture document end to end:
+executive summary; core thesis; Option A (Alfred-Native/Greenfield) and
+Option B (Alfred Discovery/Brownfield) architectures; detailed hardware
+design for Alfred Central Compute, the E2B node family, and Probe hardware;
+the full software layer stack; the Machine IR schema and capability-manifest
+format; the Vehicle Knowledge Graph schema; the deterministic firmware
+generation pipeline with an explicit AI-vs-deterministic division of labor;
+the probe/discovery pipeline (passive capture, clock sync, three-level
+network discovery, engineering-file import, Structured Experiment Mode
+statistics, physical correlation); the Active Test Mode safety/gating
+architecture; the deployment/reprogramming flow and Legacy Adapter/Gateway
+pattern; the convergence argument tying Option A and B into one Machine IR;
+the five-phase migration strategy; the product hardware family; prototype
+vs.\ production-automotive BOM guidance; a four-stage MVP roadmap; a
+competitive-differentiation table; a technical moat analysis; a risk table
+covering 21 named limitations with explicit categorization; ten immediate
+next engineering tasks; and a final explicit 12-month-runway recommendation
+(build through MVP2 and land one real customer pilot, defer Alfred Core and
+the full E2B family). No prior session context existed; this is the
+baseline document. Next session should: review/tighten numeric placeholders
+against any real hardware measurements once available, and begin tracking
+actual MVP0 progress against Section~\ref{sec:roadmap} here.
+}

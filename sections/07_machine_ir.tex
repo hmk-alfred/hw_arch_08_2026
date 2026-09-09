@@ -1,0 +1,132 @@
+\section{Alfred Machine IR}
+\label{sec:machine-ir}
+\label{sec:discovery-a}
+
+\subsection{Peripheral discovery on an Alfred-native node}
+
+\begin{diagram}
+   E2B node boots
+        |
+        v
+   Reads onboard config strap / provisioned identity
+   (which peripheral front-end variant, which channels populated
+    at manufacturing test -- see Section 5.2 provisioning interface)
+        |
+        v
+   Assembles Capability Manifest (below) from the
+   Verified Primitive Library entries compiled into its firmware
+        |
+        v
+   Announces manifest over network (authenticated registration
+   handshake with the ACC; no unauthenticated broadcast)
+        |
+        v
+   Alfred Central Compute validates signature, registers device
+   instance into this vehicle's Machine IR
+\end{diagram}
+
+\subsection{Capability manifest format}
+
+The manifest is the atomic unit both discovery paths (native announce, or Option-B graph compilation) ultimately produce. It is deliberately close to the format sketched in the design brief, formalized here as the actual schema:
+
+\begin{lstlisting}[language=alfredspec]
+device:
+  id: e2b_node_12.actuator_1
+  semantic_type: LinearActuator
+  display_name: front_left_door_actuator
+
+capabilities:
+  - move_to_position:
+      args: {position: percent}
+  - move_velocity:
+      args: {velocity: percent_per_s}
+  - stop: {}
+
+telemetry:
+  - position:      {unit: mm, rate_hz: 50}
+  - velocity:       {unit: mm_per_s, rate_hz: 50}
+  - motor_current:  {unit: A, rate_hz: 200}
+  - fault_flags:    {type: bitfield, rate_hz: on_change}
+
+constraints:
+  max_current_A: 1.8
+  max_velocity_mm_s: 120
+  min_position_mm: 0
+  max_position_mm: 150
+  thermal_derate_above_C: 85
+
+interface:
+  node: e2b_node_12
+  binding:
+    pwm_channel: 2
+    hall_input: 3
+    current_sense_adc: 0
+  network_path: {zone: front_left, phy: 10BASE-T1S, segment: fl_body_spur}
+
+provenance:
+  origin: native_manifest        # native_manifest | probe_inferred
+  primitive_ref: hkg://primitives/actuator/linear/hbridge_hall_v3
+  confidence: 1.0                # always 1.0 for native_manifest
+  last_verified: 2026-09-08T00:00:00Z
+\end{lstlisting}
+
+The \code{provenance} block is what makes the format shared across both options: a native E2B manifest always carries \code{confidence: 1.0} because the compiler that built the node's firmware also emitted this exact record; a probe-inferred device (Section~\ref{sec:knowledge-graph}) carries a confidence below 1.0 and a reference to the supporting evidence in the Vehicle Knowledge Graph, and Alfred's policy layer (Section~\ref{sec:active-control}) uses that confidence value directly to gate what commands are permitted.
+
+\subsection{Formal Machine IR structure}
+
+The Machine IR for a vehicle is a graph, not a flat device list, because devices depend on network paths which depend on physical nodes which depend on power domains:
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}l X@{}}
+\toprule
+\textbf{IR entity} & \textbf{Contents} \\
+\midrule
+\code{Vehicle} & identity, program/platform reference, architecture type (native / discovered / hybrid) \\
+\code{PhysicalNode} & E2B node instance, or (Option B) legacy ECU instance; MCU/HW reference into Hardware Knowledge Graph, firmware version, health status \\
+\code{NetworkSegment} & PHY type, bitrate, topology (point-to-point/multidrop/bus), gateway relationships \\
+\code{Device} & the capability-manifest record above; belongs to exactly one \code{PhysicalNode}, reachable via one or more \code{NetworkSegment} hops \\
+\code{ResourceBinding} & the specific timer/DMA/pin/ADC-channel/CAN-ID/LIN-frame slot a Device consumes on its \code{PhysicalNode} --- this is what the Firmware Compiler's resource planner (Section~\ref{sec:firmware-generation}) both consumes (Option A: must not conflict) and, for Option B legacy adapters, treats as read-only truth it must not violate \\
+\code{ControlLoop} & placement decision record (central/edge) plus the deadline/jitter/bandwidth factors from Section~\ref{sec:acc} that produced that decision, so the decision is auditable, not implicit \\
+\code{Behavior} & application-layer composition referencing Devices via the Semantic API \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Data architecture: IR vs. Knowledge Graph vs. capture data}
+
+\begin{diagram}
+  +------------------------------------------------------------+
+  |                 HARDWARE KNOWLEDGE GRAPH                    |
+  |   (cross-vehicle, cross-program -- Alfred's compounding      |
+  |    asset, see Section 19)                                    |
+  |                                                                |
+  |   MCU parts | transceiver init sequences | verified primitives|
+  |   | previously-seen CAN-ID semantic patterns per OEM platform |
+  +---------------------------+----------------------------------+
+                               | referenced by
+                               v
+  +------------------------------------------------------------+
+  |                 MACHINE IR  (per vehicle instance)            |
+  |   Vehicle -> PhysicalNode -> NetworkSegment -> Device ->      |
+  |   ResourceBinding, ControlLoop, Behavior                      |
+  +--------------+--------------------------------+--------------+
+                 ^                                  ^
+                 | compiled from                    | compiled from
+        (Option A)|                          (Option B)|
+   +---------------+------+                +------------+-----------+
+   | Native Capability     |                | Vehicle Knowledge Graph |
+   | Manifests (confidence |                | (Section 8) built from  |
+   | = 1.0, emitted by the |                | Capture Data + Protocol |
+   | Firmware Compiler)    |                | ID + Correlation Engine |
+   +------------------------+                +------------+-----------+
+                                                            ^
+                                                            | raw input
+                                              +-------------+-------------+
+                                              | Time-synchronized capture  |
+                                              | data (frames, events,      |
+                                              | electrical measurements)   |
+                                              +----------------------------+
+\end{diagram}
+
+This separation matters operationally: capture data is large and vehicle-specific and can be discarded/archived after the Knowledge Graph is built from it; the Vehicle Knowledge Graph is medium-sized and vehicle-specific and is retained as the audit trail behind every Machine IR entry's confidence score; the Machine IR is small, per-vehicle, and is what the Runtime and application layer actually query at run time; the Hardware Knowledge Graph is the only one of the four that grows across the whole fleet/company and is never vehicle-specific.

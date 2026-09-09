@@ -1,0 +1,55 @@
+\section{Active-Control Architecture}
+\label{sec:active-control}
+
+\subsection{Command path}
+
+\begin{diagram}
+   Alfred API call
+   (e.g., vehicle.rear_left_indicator.enable())
+             |
+             v
+   Safety Policy Engine
+   - is this Device's mapping confidence >= promotion threshold?
+   - is this semantic capability on the permitted allowlist for
+     Active Test Mode (Section 11.3)?
+   - is current vehicle state consistent with issuing this command?
+     (e.g., refuse "open door" while a "vehicle moving" signal,
+      if mapped, indicates motion -- fail CLOSED if that signal's
+      mapping is itself unvalidated)
+             |
+             v
+   Validated Vehicle Mapping (Machine IR Device + ResourceBinding,
+   Section 7)
+             |
+             v
+   Protocol Adapter (translates the validated capability call into
+   the specific legacy frame(s)/service call(s) for this vehicle
+   instance -- CAN frame, LIN frame, UDS routine, SOME/IP call)
+             |
+             v
+   Vehicle network (transmit path, gated by hardware transmit-enable,
+   Section 11.4)
+\end{diagram}
+
+The API surface exposed to a user/operator is always \code{vehicle.rear\_left\_indicator.enable()} --- never a raw "send CAN ID 0x311 = 0x10" primitive. Raw frame transmission exists only as an internal, access-controlled engineering tool used to \emph{build} protocol adapters and validate mappings during Structured Experiment Mode; it is not the product surface, and is not reachable by an application built on the Semantic API.
+
+\subsection{Test-mode gating and hardware interlocks}
+
+\begin{itemize}
+\item \textbf{Allowlists:} a per-vehicle, per-engagement configuration file explicitly enumerates which semantic capabilities are eligible for Active Test Mode at all. Anything not listed is not actuable, full stop, regardless of mapping confidence.
+\item \textbf{State validation:} before every command, the Safety Policy Engine checks any mapped precondition signals (ignition state, park/gear state, door state, speed if mapped) and refuses the command if state is unknown or inconsistent, defaulting to refusal on ambiguity rather than best-effort.
+\item \textbf{Test-mode gating:} Active Test Mode is a distinct, explicitly-entered operator state (not a config flag left on), requiring re-confirmation per session and displaying the current allowlist before any command can be issued.
+\item \textbf{Hardware transmit-disable:} each probe/adapter transmit path has a physical enable line (e.g., a relay or transceiver enable pin) gated by a signal the software cannot assert on its own without an accompanying physical action (a key-switch, a push-to-test button, or a jumper) --- the ``passive by default'' guarantee in Section~\ref{sec:option-b-overview} is a hardware property, not only a software one.
+\item \textbf{Physical interlocks:} for bench/lab validation, an interlock loop (e.g., a bench safety relay wired to an E-stop and to a guard/enclosure switch) can gate the same transmit-enable line, so a command cannot reach the vehicle network while a guard is open.
+\item \textbf{Emergency stop:} a single, always-available, hardware-level E-stop deasserts every transmit-enable line simultaneously and is independent of the software stack (i.e., still works if the ACC/Analyzer software has hung).
+\item \textbf{Command timeout:} every issued command carries a maximum validity window; the protocol adapter is responsible for returning the target to a known-safe state (or ceasing to refresh a periodic command) if the application does not renew/re-issue within that window, rather than a stale command persisting indefinitely.
+\item \textbf{Audit logging:} every command that reaches the protocol adapter --- accepted or refused, with the specific policy rule that refused it if applicable --- is logged with the same synchronized timestamp used elsewhere, forming an immutable (append-only, signed) audit trail for the engagement.
+\end{itemize}
+
+\subsection{Starting scope: non-safety-critical systems only}
+
+\begin{decision}[title={Scope boundary for Active Test Mode}]
+Initial and default-allowed categories: lighting, seats, windows, doors, mirrors, HVAC, and auxiliary/comfort actuators. Braking, steering, airbags, propulsion torque, and other functions meeting ISO~26262 ASIL~C/D classification in the source vehicle are never treated as generic experimentation targets; enabling any control path into such a function requires a separate, explicit, program-specific safety case reviewed outside of Alfred's default tooling posture, and is out of scope for this architecture document.
+\end{decision}
+
+This scope boundary is enforced structurally, not just by policy: the default allowlist schema ships empty for any capability tagged with a safety classification at or above the configured threshold, and enabling one requires an explicit override recorded in the audit log with an attributed approver.

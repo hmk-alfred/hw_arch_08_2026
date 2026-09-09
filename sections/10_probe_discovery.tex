@@ -1,0 +1,117 @@
+\section{Probe / Discovery Architecture}
+\label{sec:probe-discovery}
+
+Probe hardware is specified in Section~\ref{sec:probe-hardware}. This section specifies what the probe records, how nodes stay synchronized, and the software pipeline that turns captures into the Vehicle Knowledge Graph (Section~\ref{sec:knowledge-graph}).
+
+\subsection{Passive capture record}
+
+Every observed message/event is normalized into a common record, regardless of source interface:
+
+\begin{lstlisting}[language=alfredspec]
+capture_event:
+  timestamp_ns: 1725830400123456789   # synchronized clock domain
+  probe_id: probe_node_B
+  physical_interface: CAN1
+  bus: CAN-B
+  bitrate_bps: 500000
+  message_id: "0x318"
+  source: null            # populated where addressable (Ethernet/LIN sched)
+  destination: null
+  payload_hex: "0A3F0012"
+  inferred_period_ms: 20.0
+  error_state: none        # none | error_frame | bus_off | crc_fail | ...
+  electrical:
+    voltage_diff_v: 2.1    # optional, only where analog front end present
+    event_state: null      # e.g., rising/falling for GPIO/PWM capture
+  sync:
+    clock_domain: vehicle_gptp_v1
+    sync_quality_ns: 850    # estimated sync error at capture time
+\end{lstlisting}
+
+Fields are populated "as applicable" per interface: a LIN capture populates \code{source}/\code{destination} from the schedule table once known; a PWM-capture event populates \code{electrical.event\_state} (edge type) and duty cycle instead of \code{payload\_hex}; an Ethernet/SOME-IP capture populates \code{source}/\code{destination} from IP/MAC and nests a decoded payload structure rather than raw hex once Level 2 decoding (below) succeeds.
+
+\subsection{Clock synchronization}
+
+\begin{decision}[title={Synchronization approach}]
+All probe nodes run IEEE~1588/802.1AS (PTP/gPTP) slaved to a grandmaster hosted on the Alfred Analyzer (or, where the vehicle's own automotive Ethernet backbone already runs gPTP, slaved to that grandmaster instead, giving native alignment with the vehicle's own time domain). For probe nodes with no Ethernet uplink of their own (e.g., a CAN-only module chained behind an aggregator), synchronization is achieved by daisy-chaining PTP over the aggregation link (Section~\ref{sec:probe-hardware}) with a measured, calibrated fixed offset for the aggregation hop latency, not a naive assumption of zero latency. Every capture record's \code{sync\_quality\_ns} field is populated from the PTP servo's own reported offset/path-delay error at time of capture, so downstream correlation (Section~\ref{sec:correlation}) can weight evidence by its actual timing confidence rather than assuming perfect sync.
+\end{decision}
+
+\subsection{Three-level network discovery}
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}l l X@{}}
+\toprule
+\textbf{Level} & \textbf{Name} & \textbf{Method} \\
+\midrule
+1 & Electrical/protocol ID & Differential-pair electrical characterization (voltage swing, common-mode, edge rate) matched against a library of known bus electrical signatures (CAN high-speed, CAN single-wire, LIN, RS-485, etc.); bitrate estimated from edge timing histograms; purely deterministic signal-processing, no ML needed since these signatures are well specified by standard \\
+2 & Network protocol recognition & Deterministic protocol decoders attempted in a defined precedence order per Level-1 hint: CAN frames tested for ISO-TP segmentation, ISO-TP payloads tested against UDS service-ID grammar; Ethernet frames decoded through IPv4/IPv6, then UDP/TCP, then SOME/IP or DoIP grammars. A decoder either matches its grammar or it doesn't --- this stage produces structural facts (this is UDS, this is SOME/IP service X) with no confidence ambiguity \\
+3 & Semantic identification & The genuinely uncertain stage: mapping a specific bit/byte/service field to a real-world meaning (``left turn request''). Driven by Structured Experiment Mode (below) plus passive correlation plus imported engineering files, always confidence-scored, never asserted as fact \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Alfred progresses top-down automatically for Levels 1--2 (fully automated, runs continuously on every capture) and requires an explicit Structured Experiment session, or sufficient passive correlation opportunities, to progress instances into Level 3.
+
+\subsection{Engineering file import}
+
+DBC, ARXML, LDF, A2L, ODX, and other supplier artifacts are parsed into the same graph structure and treated as \textbf{high-confidence priors}, not ground truth: an imported DBC signal name/scaling is attached to the graph with a high starting confidence (because it is manufacturer-declared), but it is still cross-checked against observed traffic (does a frame with this arbitration ID actually appear on the expected bus, at the expected period, with values that make physical sense) and downgraded if reality disagrees --- a stale DBC from a superseded ECU revision is common enough that blind trust would corrupt the graph. When artifacts are unavailable (common for proprietary ag/mining/industrial control systems), Level 3 relies entirely on Structured Experiment Mode and passive correlation.
+
+\subsection{Structured Experiment Mode}
+\label{sec:correlation}
+
+\begin{diagram}
+   Alfred (operator-directed or semi-autonomous experiment plan):
+       "ACTION: Press the left turn signal switch."
+             |
+             v
+       Record window: [T-10s ... event ... T+10s]  across ALL probes
+             |
+             v
+       Repeat N times (default N=8-12), varying:
+         - vehicle state where safe to vary (ignition on/off, engine
+           running/not, other switches idle vs active) to break
+           coincidental correlations
+             |
+             v
+       Candidate ranking (this run):
+         CAN-B  / ID 0x311 / bit 4        99.8%
+         LIN-2  / frame 0x17 / byte 1     97.1%
+         SOME/IP service event XYZ        92.4%
+\end{diagram}
+
+Statistical/algorithmic methods (deterministic, not "ask the model"):
+
+\begin{itemize}
+\item \textbf{Event correlation:} for each candidate bit/byte/field, compute the empirical rate of state-transition co-occurrence with the commanded action across all trials within a tight time window (bounded by expected network latency, typically single-digit milliseconds for CAN, sub-millisecond for a local LIN/Ethernet hop); score $=$ (transitions matching action) / (total transitions observed for that field across all trials), penalized by any transition of that field observed \emph{without} a corresponding action (false-positive rate).
+\item \textbf{Repeated-state comparison:} differential capture across repeated trials in otherwise-identical vehicle state isolates fields that change specifically with the commanded action versus fields that change for unrelated reasons (e.g., a periodic heartbeat counter) by requiring the field's *change instants*, not just its values, to align with action instants across trials.
+\item \textbf{Periodic-signal recognition:} autocorrelation over a capture window identifies frame IDs/fields with a stable period (typical of cyclic status broadcasts) versus event-driven fields (typical of switch/button state) \emph{before} running the correlation search, so periodic "noise" fields are down-weighted rather than polluting the candidate list.
+\item \textbf{Rolling counters and checksums:} byte/nibble positions whose value sequence matches a linear increment-with-wraparound pattern, or that satisfy a common checksum function (XOR, CRC-8/16 over the rest of the frame) against the rest of the payload across many observed frames, are flagged and excluded from being offered as semantic candidates (a rolling counter will spuriously "correlate" with almost anything if not excluded first).
+\item \textbf{Multiplexed signals:} candidate mode/selector bytes are detected by clustering frames of the same arbitration ID into groups with structurally different payload layouts (a byte whose value strongly predicts which \emph{other} byte positions vary), before per-mode correlation is attempted within each cluster.
+\item \textbf{Event-driven vs. state-driven fields:} distinguished by inter-change-interval distribution --- a state-driven switch field has change instants clustered near operator actions with otherwise-long idle gaps; a state-broadcast field changes at a roughly fixed cadence regardless of operator action.
+\end{itemize}
+
+Confidence accumulates across repeated experiment runs (Bayesian-style update: each additional consistent trial increases confidence toward, but never exactly at, 1.0; any contradicting trial sharply reduces it) rather than being fixed after one observation, which is why the graph schema in Section~\ref{sec:knowledge-graph} stores a list of supporting \code{evidence} entries per mapping rather than a single observation.
+
+\subsection{Physical correlation}
+\label{sec:physical-correlation}
+
+\begin{diagram}
+   vehicle network command (e.g., LIN frame commanding window motor)
+             |
+             v
+   PWM output (measured at motor driver, via probe analog module)
+             |
+             v
+   motor current (measured via shunt/Hall current-sense probe module)
+             |
+             v
+   Hall pulses (quadrature/Hall capture module, gives actual shaft motion)
+             |
+             v
+   physical motion (optionally corroborated by a simple external sensor:
+                     e.g., an accelerometer taped to the panel, or a
+                     laser distance sensor during bench validation)
+\end{diagram}
+
+Simultaneous network-layer and electrical-layer measurement lets Alfred distinguish \emph{command} from \emph{effect} and infer causality rather than mere correlation: a network correlation alone cannot tell whether a signal \emph{causes} motion or merely \emph{reports} motion that some other command caused (e.g., a status echo). Observing that PWM duty cycle changes within a fixed, small latency window \emph{after} the network command, and that current draw and Hall pulses follow the PWM change with the physically-expected motor electrical time constant, establishes a causal chain that pure network-side correlation cannot. This is also the primary technique for characterizing an unknown ECU's own control-loop behavior (e.g., measuring the actual position-servo bandwidth of a legacy actuator) well enough to author an accurate replacement E2B-MOTOR firmware primitive during migration (Section~\ref{sec:migration}).

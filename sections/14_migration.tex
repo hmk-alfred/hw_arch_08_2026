@@ -1,0 +1,47 @@
+\section{Migration Strategy}
+\label{sec:migration}
+
+\begin{diagram}
+ PHASE 0: Observe               Legacy vehicle + Alfred Probe
+                                 (Section 10; passive only)
+      |
+      v
+ PHASE 1: Understand            Vehicle Knowledge Graph populated:
+                                 machine graph, ECU map, signal map
+                                 (Section 8)
+      |
+      v
+ PHASE 2: Control selected      Alfred API -> Alfred Gateway ->
+          functions             legacy network adapter (Section 12.4)
+                                 -- non-safety-critical scope only
+                                 (Section 11.3)
+      |
+      v
+ PHASE 3: Replace selected      old body ECU removed -> Alfred E2B
+          ECUs                  node installed in its place, using
+                                 the SAME connector/harness point
+                                 where feasible (Section 5.2)
+      |
+      v
+ PHASE 4: Collapse network      CAN / LIN islands, now serving fewer
+          architecture          and fewer legacy ECUs, are progressively
+                                 retired in favor of Ethernet edge
+                                 architecture (Section 5.1/5.2)
+      |
+      v
+ PHASE 5: Alfred-native         central compute + Ethernet backbone +
+          vehicle               E2B nodes (Section 3)
+\end{diagram}
+
+\subsection{Why this is a low-risk entry motion}
+
+\begin{itemize}
+\item \textbf{Phase 0/1 require zero vehicle modification and zero actuation risk} --- a customer can authorize probe installation on a development/test vehicle with essentially the same risk profile as installing a data logger, which is a far smaller approval/procurement hurdle than "let us reprogram your ECUs."
+\item \textbf{Phase 2 stays within the non-safety-critical allowlist} (Section~\ref{sec:active-control}) by design, so the first revenue-relevant capability Alfred demonstrates (e.g., programmatic control of seats/mirrors/HVAC for a fleet customer's ergonomics or comfort feature) never requires the customer to accept safety-case risk on Alfred's word alone.
+\item \textbf{Phase 3 targets are chosen by the customer, one ECU at a time}, using the Vehicle Knowledge Graph's confidence scores and the ECU's programmability assessment (Section~\ref{sec:deployment-reprogramming}) to pick the lowest-risk, highest-value replacement first --- typically a body-function ECU with a well-characterized command surface and no safety classification.
+\item \textbf{Phase 4/5 are economically self-reinforcing once started}: each ECU replaced with an E2B node removes a CAN/LIN drop, which reduces bus load and complexity for the \emph{remaining} legacy ECUs' traffic, which in turn makes each subsequent migration incrementally easier to validate (less contention, cleaner captures) --- the architecture gets easier to finish the more of it is finished, which is an unusual and favorable property for a phased hardware migration.
+\end{itemize}
+
+\subsection{Entry-then-expand as the commercial mechanism}
+
+This phased structure is what lets Alfred enter a customer account through a single low-risk subsystem (a lighting or seat-control pilot, say) and expand its footprint over the following 12--36 months without ever requiring the customer to make a single large architecture bet up front. Each phase transition is a new, independently justifiable purchase decision (a Probe engagement, then a Gateway deployment, then a handful of E2B nodes, then a broader retrofit program) rather than one all-or-nothing platform commitment --- which matters commercially because automotive/industrial buyers are structurally averse to the latter and structurally comfortable with the former.

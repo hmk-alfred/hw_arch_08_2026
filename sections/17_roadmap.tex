@@ -1,0 +1,48 @@
+\section{MVP Roadmap}
+\label{sec:roadmap}
+
+The roadmap is built to prove one thesis as early as possible: \emph{the same application, unmodified, controls the same class of peripheral on both a legacy machine (via Probe) and a purpose-built rig (via E2B)}. Everything not required to prove that thesis is deliberately deferred, including the FPGA probe front end, the full E2B family, the AP/RT split on real automotive silicon, and any certification-evidence tooling beyond what makes the pipeline auditable in principle.
+
+\subsection{MVP 0 (4--8 weeks)}
+
+\begin{itemize}
+\item Single Alfred Bus Module (CAN-FD + LIN) on an STM32/S32K dev board, feeding a laptop-hosted Analyzer.
+\item A cheap bench rig with real automotive-style peripherals: a 12V DC motor + Hall sensor (window/actuator stand-in), an LED lamp circuit, a couple of switches, wired to a small breakout that speaks CAN and/or LIN like a toy body-control network (this can literally be a hobbyist CAN-controlled relay/motor board -- the point is a real electrical bus with real physical effect, not a simulator).
+\item Passive capture + Level 1/2 decode working end-to-end.
+\item Manual Structured Experiment Mode (operator presses switch, script records before/after, computes simple co-occurrence score) --- correlation math implemented, UI can be a notebook/CLI.
+\item Demo: Alfred correctly identifies "this CAN ID/bit maps to the lamp" and "this CAN ID maps to the motor," with a confidence score, purely from passive+experiment capture.
+\end{itemize}
+
+\subsection{MVP 1 (3 months)}
+
+\begin{itemize}
+\item Vehicle Knowledge Graph schema (Section~\ref{sec:knowledge-graph}) implemented as a real, queryable store (not a notebook artifact); Graph-to-IR promotion logic implemented.
+\item Machine IR (Section~\ref{sec:machine-ir}) implemented with the Semantic API surface (\code{light.set\_behavior()}, \code{actuator.move\_to\_position()}) callable against the MVP0 rig's promoted Devices.
+\item Active Test Mode with the full gating stack from Section~\ref{sec:active-control} (allowlist, state validation, hardware transmit-enable, E-stop, audit log) --- even if the allowlist only ever contains "lamp" and "motor" at this stage, the \emph{mechanism} must be real, not stubbed, because it is the thing that ends up in every later demo unchanged.
+\item First E2B-LITE prototype board (real PCB, not a dev-board breakout): MCU + 10BASE-T1S PHY + protected GPIO/PWM/ADC, driving the \emph{same} lamp/switch peripherals from MVP0's rig.
+\item Demo: \code{light.set\_behavior(BRAKE)} called against the legacy rig (via Probe/Gateway) and, separately, against the E2B-LITE-controlled version of the same lamp --- same API call, same observable physical result, two different hardware paths underneath.
+\end{itemize}
+
+\subsection{MVP 2 (6 months)}
+
+\begin{itemize}
+\item E2B-MOTOR prototype board (real PCB): motor driver + current sense + Hall decode, closing a local position-servo loop, exposing \code{LinearActuator} capabilities identical in shape to the legacy-mapped actuator from MVP0/1.
+\item Deterministic Firmware Generation pipeline (Section~\ref{sec:firmware-generation}) operating for at least the E2B-LITE and E2B-MOTOR target packs: Machine IR change $\rightarrow$ resource-planned $\rightarrow$ generated firmware $\rightarrow$ built $\rightarrow$ flashed, for a real new Device addition, without hand-written target-specific C code for that addition.
+\item Minimal Alfred Lab bench (manual fixtures acceptable): repeatable flash + smoke-test cycle for E2B boards.
+\item Engineering file import (DBC at minimum) feeding the Correlation Engine as a confidence prior, demonstrated on a real (or realistic sample/public) DBC against the bench rig.
+\item Demo: the full convergence diagram from Section~\ref{sec:convergence} working live --- the same application script drives \code{actuator.set\_position(60\%)} against both the legacy-Probe-mapped actuator and the E2B-MOTOR-controlled actuator, side by side.
+\end{itemize}
+
+\subsection{MVP 3 --- first serious customer pilot}
+
+\begin{itemize}
+\item Full distributed Probe (multiple synchronized nodes, gPTP) deployed on an actual customer development vehicle (fleet operator, OEM innovation group, or ag/mining equipment maker), Phase 0/1 migration (Section~\ref{sec:migration}) executed for real: passive capture, Vehicle Knowledge Graph built for a meaningful subsystem (e.g., full body/lighting network).
+\item Phase 2 (Gateway-mediated control) demonstrated on that customer's actual vehicle for a non-safety-critical function set, under the full Active Test Mode gating stack, with real audit logging reviewed by the customer.
+\item Alfred Core first real automotive-silicon build (S32G-class board), running the AP/RT split, as the target for a from-scratch E2B-based subsystem the customer agrees to pilot (e.g., replacing one body ECU) --- this is the first point Phase 3 migration is attempted for real.
+\item HIL validation gate operating in the Deployment Manager for that pilot's firmware before anything is flashed to customer hardware.
+\item This is the pilot that should convert into a paid engagement and a reference customer, not an internal demo.
+\end{itemize}
+
+\begin{decision}[title={Sequencing discipline}]
+Do not build Alfred Core (Section~\ref{sec:acc}) or the full E2B family before MVP2/3. Every one of MVP0/1/2's demos is achievable on dev-board-class hardware and a single peripheral class (lamp, then motor); resist the temptation to build the "complete" central compute or probe hardware early, since the thesis-proving demo does not require it and it consumes the runway that MVP0/1's speed depends on.
+\end{decision}

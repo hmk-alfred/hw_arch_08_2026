@@ -1,0 +1,18 @@
+\section{Final Recommendation: 12-Month Runway}
+\label{sec:final-recommendation}
+
+\begin{center}
+\Large\textit{``If Alfred had only 12 months of runway, what exact subset of this architecture should the company build to most convincingly prove that Alfred can become the universal physical infrastructure layer for programmable machines?''}
+\end{center}
+
+\begin{decision}[title={Concrete recommendation}]
+Build only through MVP2 (Section~\ref{sec:roadmap}), and spend the remaining runway converting MVP2 into one real, paid MVP3-shaped pilot on a customer's actual legacy vehicle --- do \emph{not} spend 12 months building toward a complete Alfred-native vehicle. Specifically:
+
+\begin{enumerate}
+\item \textbf{Build:} the Alfred Bus Module, the Analyzer software (capture, Level 1/2 decode, Correlation Engine, Structured Experiment Mode), the Vehicle Knowledge Graph and Graph-to-IR compiler, the Machine IR and Semantic API for exactly two device classes (\code{Lamp}, \code{LinearActuator}/motor), the full Active Test Mode safety stack (this is non-negotiable regardless of scope, because it is what makes any actuation demo credible and safe), the deterministic Firmware Generation pipeline for one MCU target pack, and E2B-LITE plus E2B-MOTOR prototype PCBs.
+\item \textbf{Do not build:} Alfred Core / real automotive AP+RT silicon, the full E2B family (E2B-SENSOR/BODY/HIGH-SPEED), the FPGA probe front end, TSN/switch sophistication beyond what a bench demo needs, automated Alfred Lab HIL infrastructure (manual bench fixtures are sufficient), ASPICE/ISO~26262 process tooling beyond making the pipeline's evidence output plausible, and any safety-critical-function scope.
+\item \textbf{Spend the last quarter} landing one design-partner engagement (a fleet operator, an ag/mining OEM's innovation group, or a UGV integrator --- whichever responds fastest, since the architecture is deliberately vehicle-class-agnostic) and running that engagement's Phase 0/1/2 (Section~\ref{sec:migration}) on their actual hardware, ending in a live demo of the exact convergence claim in Section~\ref{sec:convergence}: the same \code{light.set\_behavior()}/\code{actuator.set\_position()} calls, unmodified, working against both their real legacy vehicle (via Probe/Gateway) and Alfred's own E2B-based rig.
+\end{enumerate}
+\end{decision}
+
+The reasoning: the entire architecture in this document is worth building only if the central claim --- one semantic API, two hardware ingestion paths, identical application behavior --- is true and demonstrable on a real machine, not a synthetic rig. That claim is fully testable with two device classes, one customer, and none of the production-hardening, safety-certification, or central-compute silicon work that a complete Option A build would require. Every dollar spent on Alfred Core, the full E2B family, or FPGA-based probing before that claim is proven on a real customer vehicle is a dollar spent de-risking an assumption (that customers want the full platform) that has not yet been validated, at the expense of the one demo that actually validates the company's reason to exist.

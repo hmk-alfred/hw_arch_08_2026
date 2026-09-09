@@ -1,0 +1,98 @@
+\section{Alfred Hardware Product Family}
+\label{sec:product-family}
+
+\small
+\begin{longtable}{@{}p{2.1cm} p{12.6cm}@{}}
+\toprule
+\multicolumn{2}{@{}l}{\textbf{ALFRED PROBE} --- development/discovery hardware (Section~\ref{sec:probe-hardware})} \\
+\midrule
+Purpose & Passive, distributed capture across legacy vehicle networks; foundation of Option B discovery. \\
+Interfaces & CAN/CAN-FD, LIN, 10/100/1000BASE-T1 tap, conventional Ethernet tap, UART/RS-485, GPIO/PWM-capture, analog, current-sense. \\
+Processor class & Per-module automotive MCU (STM32/S32K-class) + ARM/Linux aggregation host (i.MX8M-class). \\
+Architecture & Modular front-end boards into a common aggregation host; gPTP-synchronized; Gigabit uplink to Analyzer. \\
+Proprietary & Correlation Engine, capture normalization format, module aggregation firmware, sync calibration. \\
+COTS & MCU/PHY/transceiver silicon, host SoC, enclosure, standard automotive connectors. \\
+Priority & \textbf{Highest --- build first} (Section~\ref{sec:roadmap}, MVP0/1). \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{ALFRED ANALYZER} --- discovery software host / aggregation compute} \\
+\midrule
+Purpose & Runs Protocol ID, Correlation Engine, Knowledge Graph builder, Structured Experiment orchestration, and the Active Test Mode policy engine. \\
+Interfaces & Gigabit Ethernet to Probe nodes; user-facing UI/API. \\
+Processor class & Could be a ruggedized field laptop/mini-PC for early engagements; purpose-built rugged compute unit for production field kits. \\
+Architecture & Standard x86/ARM server-class compute; not automotive-qualified since it never touches the vehicle network directly. \\
+Proprietary & The entire discovery/correlation/graph software stack; hardware itself is COTS. \\
+COTS & Compute hardware, OS, standard networking. \\
+Priority & \textbf{Highest --- built alongside Probe from day one} (it is mostly software). \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{ALFRED T1 TAP} --- automotive Ethernet monitoring hardware} \\
+\midrule
+Purpose & Purpose-built passive tap for 100BASE-T1/1000BASE-T1 segments, sold/used standalone or as a Probe module. \\
+Interfaces & Dual T1 PHY pairs (through + monitor), Gigabit Ethernet out. \\
+Processor class & Minimal --- PHY pair + small MAC/FPGA for hardware timestamping; can be a dumb passive coupler for some topologies. \\
+Architecture & In-line passive tap preserving the original link, mirroring frames out a monitor port with PTP hardware timestamps. \\
+Proprietary & Timestamp-accurate mirroring/aggregation firmware. \\
+COTS & T1 PHYs (DP83TC81x/TJA110x-class), off-the-shelf tap reference designs. \\
+Priority & \textbf{Medium} --- needed once a program includes automotive-Ethernet-equipped vehicles (MVP2+). \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{ALFRED BUS MODULE} --- CAN/CAN-FD/LIN interface hardware} \\
+\midrule
+Purpose & The CAN/LIN front-end module of the Probe family; also reusable as the bus-facing half of the Gateway. \\
+Interfaces & CAN-FD (isolated, listen-only capable), LIN (isolated). \\
+Processor class & Automotive MCU with integrated CAN-FD/LIN peripherals (S32K3-class). \\
+Architecture & Per-channel isolated transceiver front end + MCU running Capture Service / Protocol Adapter firmware, same base image family as E2B-BODY. \\
+Proprietary & Shared firmware base with E2B-BODY (deliberate code reuse, Section~\ref{sec:convergence}). \\
+COTS & CAN-FD/LIN transceiver ICs, isolation parts. \\
+Priority & \textbf{Highest} --- required for MVP0. \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{ALFRED GATEWAY} --- production legacy adapter (Section~\ref{sec:deployment-reprogramming})} \\
+\midrule
+Purpose & Continuous, unattended, authorized command path into validated legacy functions; production-hardened Probe. \\
+Interfaces & Same as Probe (subset per deployment), plus hardware transmit-enable/interlock. \\
+Processor class & Same MCU/host tier as Probe, provisioned for unattended automotive-environment operation. \\
+Architecture & Probe hardware + Safety Policy Engine + interlocks, OTA-updatable, watchdog-supervised. \\
+Proprietary & Safety Policy Engine, allowlist/audit framework, protocol adapters per validated mapping. \\
+COTS & Same silicon as Probe/Bus Module. \\
+Priority & \textbf{Medium-high} --- required once Phase 2 migration engagements begin (post-MVP2). \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{ALFRED E2B} --- production peripheral edge controller (Section~\ref{sec:e2b-family})} \\
+\midrule
+Purpose & Turns raw peripherals into network-addressable, self-describing devices; core Option A hardware. \\
+Interfaces & Variant-dependent (Section~\ref{sec:e2b-family}): GPIO/PWM/ADC, motor drive + Hall/current-sense, SPI/I2C/SENT, CAN-FD/LIN passthrough, high-speed Ethernet. \\
+Processor class & Automotive MCU (S32K3/STM32-auto class). \\
+Architecture & Common MCU+PHY+power+protection base, variant-specific analog front end (Section~\ref{sec:e2b-family}). \\
+Proprietary & Firmware base image, capability manifest agent, Verified Primitive Library entries, resource planner Target Pack. \\
+COTS & MCU, PHY/transceiver, gate-driver/analog front-end ICs, connectors. \\
+Priority & \textbf{High} --- E2B-LITE and E2B-MOTOR by MVP2; full family by MVP3. \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{ALFRED CORE} --- central compute hardware (Section~\ref{sec:acc})} \\
+\midrule
+Purpose & Application + real-time compute, Ethernet switch/TSN, gPTP grandmaster, OTA/deployment host for an Alfred-native vehicle. \\
+Interfaces & 100/1000BASE-T1 backbone ports, 10BASE-T1S zone spurs, debug/service port, vehicle power input. \\
+Processor class & Automotive AP+RT SoC (S32G-class) or AP SoC + companion safety MCU (AURIX/SPC58-class). \\
+Architecture & Section~\ref{sec:acc} diagram: application domain / RT domain split, integrated TSN switch. \\
+Proprietary & Alfred Runtime, Deployment Manager, Diagnostics/Certification Evidence System; RT-domain supervisory firmware. \\
+COTS & SoC/MCU silicon, PMIC, storage, connectors. \\
+Priority & \textbf{Medium} --- needed for MVP3 (first Alfred-native rig), not for MVP0--2 (Section~\ref{sec:roadmap}). \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{ALFRED POWER NODE} --- protected smart power distribution / current measurement} \\
+\midrule
+Purpose & Per-circuit protected, measured power distribution for both E2B peripherals and legacy-vehicle retrofit circuits; a natural E2B variant/companion rather than a separate architecture. \\
+Interfaces & Switched/measured power outputs (eFuse per channel), Ethernet (control/telemetry), CAN/LIN passthrough option. \\
+Processor class & Same MCU tier as E2B-LITE. \\
+Architecture & E2B-LITE base + smart high-side switch ICs (current-sense, diagnostic, retry) per output channel. \\
+Proprietary & Fault-classification firmware (distinguishing overload/short/stall from normal inrush), shared Verified Primitive Library entries. \\
+COTS & Smart high-side switch ICs (e.g., automotive eFuse/HSD parts), connectors. \\
+Priority & \textbf{Medium} --- valuable early for the migration Phase~3 use case (safely powering a retrofit E2B node from an existing harness point) but not required for MVP0/1. \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{ALFRED LAB} --- bench hardware for automated firmware flashing and HIL} \\
+\midrule
+Purpose & Automates the SIL/HIL/flash/verify loop in Section~\ref{sec:deployment-reprogramming}; internal engineering tooling, potentially also a customer-facing product for their own bench validation. \\
+Interfaces & SWD/JTAG/UART/USB-DFU programmer banks, CAN/LIN bench interfaces, controllable bench power, load fixtures (motor/lamp loads) for functional verification under real load. \\
+Processor class & Standard PC/mini-PC host orchestrating COTS programmer hardware. \\
+Architecture & Fixture + relay-switched programmer/load bank under Deployment Manager orchestration. \\
+Proprietary & Test-orchestration software, fixture-to-Machine-IR mapping, evidence-bundle generation. \\
+COTS & Programmers (ST-Link/J-Link-class), bench power supplies, relays, load fixtures. \\
+Priority & \textbf{Medium} --- build a minimal version by MVP2 (manual fixtures acceptable at MVP0/1); full automation is an MVP3+ investment. \\
+\bottomrule
+\end{longtable}
+\normalsize

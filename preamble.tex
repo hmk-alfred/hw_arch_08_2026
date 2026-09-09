@@ -1,0 +1,106 @@
+% Alfred Labs -- Physical/Software Architecture -- shared preamble
+\usepackage[a4paper,margin=2.2cm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\emergencystretch=3em
+\tolerance=1200
+\usepackage{parskip}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{fancyvrb}
+\usepackage{listings}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{caption}
+\usepackage{amsmath}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\usepackage{hyperref}
+
+\definecolor{alfrednavy}{HTML}{16233F}
+\definecolor{alfredsteel}{HTML}{3C5D82}
+\definecolor{alfredlight}{HTML}{EEF2F7}
+\definecolor{alfredrule}{HTML}{9DB2C9}
+\definecolor{alfredred}{HTML}{8C2E2E}
+
+\titleformat{\section}{\normalfont\Large\bfseries\color{alfrednavy}}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\normalfont\large\bfseries\color{alfredsteel}}{\thesubsection}{0.6em}{}
+\titleformat{\subsubsection}{\normalfont\normalsize\bfseries\color{alfredsteel}}{\thesubsubsection}{0.6em}{}
+\titlespacing*{\section}{0pt}{1.6em}{0.8em}
+\titlespacing*{\subsection}{0pt}{1.2em}{0.5em}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.2pt}
+\fancyhead[L]{\small\textcolor{alfredsteel}{Alfred Labs -- Architecture Design Document}}
+\fancyhead[R]{\small\textcolor{alfredsteel}{\leftmark}}
+\fancyfoot[C]{\small\thepage}
+
+\setlist[itemize]{leftmargin=1.4em, itemsep=0.15em, topsep=0.3em}
+\setlist[enumerate]{leftmargin=1.6em, itemsep=0.15em, topsep=0.3em}
+
+% ASCII / block diagram environment: monospace, framed
+\DefineVerbatimEnvironment{diagram}{Verbatim}{%
+  fontsize=\small, frame=single, rulecolor=\color{alfredrule},
+  framesep=3mm, xleftmargin=1mm, xrightmargin=1mm, samepage=true,
+  formatcom=\color{alfrednavy}
+}
+
+% Capability / schema listing block (YAML-like structured text)
+\lstdefinelanguage{alfredspec}{
+  morekeywords={},
+  sensitive=false,
+  morecomment=[l]{\#},
+}
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  frame=single,
+  rulecolor=\color{alfredrule},
+  backgroundcolor=\color{alfredlight},
+  framesep=3mm,
+  xleftmargin=2mm,
+  xrightmargin=2mm,
+}
+
+% Callout box for design decisions / recommendations
+\newtcolorbox{decision}[1][]{
+  colback=alfredlight, colframe=alfredsteel, boxrule=0.6pt, arc=1mm,
+  fonttitle=\bfseries, title={Design Decision}, #1,
+  left=2mm, right=2mm, top=1mm, bottom=1mm
+}
+\newtcolorbox{risknote}[1][]{
+  colback=white, colframe=alfredred, boxrule=0.6pt, arc=1mm,
+  fonttitle=\bfseries\color{alfredred}, coltitle=alfredred, title={Reality Check}, #1,
+  left=2mm, right=2mm, top=1mm, bottom=1mm
+}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=alfredsteel,
+  citecolor=alfredsteel,
+  urlcolor=alfredsteel,
+  pdftitle={Alfred Labs: Universal Physical Infrastructure Layer -- Architecture Design Document},
+  pdfauthor={Alfred Labs},
+}
+
+\newcommand{\code}[1]{\texttt{#1}}
+
+% Worklog entry: \worklogentry{date}{session title}{body text}
+\newcommand{\worklogentry}[3]{%
+  \subsection*{#1 --- #2}
+  \addcontentsline{toc}{subsection}{#1 --- #2}
+  #3
+  \par\noindent\rule{\linewidth}{0.3pt}
+}
